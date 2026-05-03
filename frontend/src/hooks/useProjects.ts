@@ -29,7 +29,7 @@ export function useProjects(enabled = true) {
     fetchProjects()
   }, [fetchProjects])
 
-  const addProject = async (data: ProjectInput): Promise<Project> => {
+  const addProject = async (data: ProjectInput): Promise<void> => {
     const res = await fetch(`${API}/api/projects`, {
       ...CREDS,
       method: "POST",
@@ -39,10 +39,9 @@ export function useProjects(enabled = true) {
     if (!res.ok) throw new Error((await res.json()).detail || "Failed to create project")
     const created: Project = await res.json()
     setProjects((prev) => [created, ...prev])
-    return created
   }
 
-  const updateProject = async (id: string, data: ProjectInput): Promise<Project> => {
+  const updateProject = async (id: string, data: ProjectInput): Promise<void> => {
     const res = await fetch(`${API}/api/projects/${id}`, {
       ...CREDS,
       method: "PUT",
@@ -52,7 +51,6 @@ export function useProjects(enabled = true) {
     if (!res.ok) throw new Error((await res.json()).detail || "Failed to update project")
     const updated: Project = await res.json()
     setProjects((prev) => prev.map((p) => (p.id === id ? updated : p)))
-    return updated
   }
 
   const deleteProject = async (id: string): Promise<void> => {
