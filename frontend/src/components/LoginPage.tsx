@@ -45,7 +45,7 @@ export function LoginPage({ onLogin, onRegister }: Props) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (mode === "register" && usernameTaken) return
+    if (mode === "register" && (usernameTaken || !usernameFormatOk)) return
     setError(null)
     setLoading(true)
     try {
@@ -75,7 +75,8 @@ export function LoginPage({ onLogin, onRegister }: Props) {
     minHeight: 46,
   })
 
-  const usernameInvalid = mode === "register" && usernameTaken === true
+  const usernameFormatOk = /^[a-zA-Z0-9._-]+$/.test(username.trim())
+  const usernameInvalid = mode === "register" && (usernameTaken === true || (username.trim().length >= 2 && !usernameFormatOk))
 
   return (
     <div style={{ minHeight: "100vh", background: "#F5F4F1", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", padding: 16 }}>
@@ -138,10 +139,13 @@ export function LoginPage({ onLogin, onRegister }: Props) {
                 </span>
               )}
             </div>
-            {mode === "register" && usernameTaken === true && (
+            {mode === "register" && username.trim().length >= 2 && !usernameFormatOk && (
+              <span style={{ fontSize: 12, color: "#C0392B" }}>English letters, numbers, . _ - only</span>
+            )}
+            {mode === "register" && usernameFormatOk && usernameTaken === true && (
               <span style={{ fontSize: 12, color: "#C0392B" }}>Username already taken</span>
             )}
-            {mode === "register" && usernameTaken === false && (
+            {mode === "register" && usernameFormatOk && usernameTaken === false && (
               <span style={{ fontSize: 12, color: "#1D9E75" }}>Username available</span>
             )}
           </div>
@@ -160,7 +164,7 @@ export function LoginPage({ onLogin, onRegister }: Props) {
 
           <button
             type="submit"
-            disabled={loading || (mode === "register" && usernameTaken === true)}
+            disabled={loading || (mode === "register" && (usernameTaken === true || (username.trim().length >= 2 && !usernameFormatOk)))}
             style={{ marginTop: 4, padding: "12px 0", background: loading || (mode === "register" && usernameTaken === true) ? "#9E9AE8" : "#7F77DD", color: "#fff", border: "none", borderRadius: 10, cursor: loading || (mode === "register" && usernameTaken === true) ? "not-allowed" : "pointer", fontFamily: "inherit", fontSize: 15, fontWeight: 600, minHeight: 48, transition: "background 0.15s" }}
           >
             {loading ? "…" : mode === "login" ? "Sign in" : "Create account"}
