@@ -26,20 +26,18 @@ export function useAuth() {
 
   useEffect(() => { fetchMe() }, [fetchMe])
 
-  const login = async (username: string, password: string): Promise<AuthUser> => {
+  const login = async (username: string, password: string): Promise<void> => {
     const res = await fetch(`${API}/api/auth/login`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       credentials: "include", body: JSON.stringify({ username, password }),
     })
     if (!res.ok) throw new Error((await res.json()).detail)
-    // fetch full user with notes after login
     const me = await fetch(`${API}/api/auth/me`, { credentials: "include" })
     const full: AuthUser = await me.json()
     setUser(full)
-    return full
   }
 
-  const register = async (username: string, display_name: string, password: string): Promise<AuthUser> => {
+  const register = async (username: string, display_name: string, password: string): Promise<void> => {
     const res = await fetch(`${API}/api/auth/register`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       credentials: "include", body: JSON.stringify({ username, display_name, password }),
@@ -47,7 +45,6 @@ export function useAuth() {
     if (!res.ok) throw new Error((await res.json()).detail)
     const data: AuthUser = await res.json()
     setUser(data)
-    return data
   }
 
   const logout = async () => {
