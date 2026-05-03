@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+
+  <!-- Folder body (pastel pink) -->
+  <rect x="10" y="26" width="44" height="28" rx="5" fill="#FBCFE8"/>
+
+  <!-- Folder tab (slightly lighter pink) -->
+  <path d="M14 24H28L30 26H50C51.7 26 53 27.3 53 29V32H11V26.5C11 25.1 12.1 24 13.5 24H14Z"
+        fill="#FCE7F3"/>
+
+  <!-- Rabbit head (soft white-pink tint for visibility) -->
+  <circle cx="32" cy="40" r="10" fill="#FFF1F2"/>
+
+  <!-- Ears -->
+  <ellipse cx="27" cy="26" rx="3.5" ry="9" fill="#FFF1F2"/>
+  <ellipse cx="37" cy="26" rx="3.5" ry="9" fill="#FFF1F2"/>
+
+  <!-- Inner ears -->
+  <ellipse cx="27" cy="26" rx="1.6" ry="6.5" fill="#F9A8D4"/>
+  <ellipse cx="37" cy="26" rx="1.6" ry="6.5" fill="#F9A8D4"/>
+
+  <!-- Eyes -->
+  <circle cx="29" cy="40" r="1.7" fill="#374151"/>
+  <circle cx="35" cy="40" r="1.7" fill="#374151"/>
+
+  <!-- Mouth -->
+  <path d="M31 43 L32 44 L33 43"
+        fill="none"
+        stroke="#FB7185"
+        stroke-width="1.2"
+        stroke-linecap="round"/>
+
+  <!-- Tracking badge -->
+  <circle cx="50" cy="48" r="6.5" fill="#FFFFFF"/>
+  <path d="M47.5 48L49 49.8L52.5 45.5"
+        fill="none"
+        stroke="#22C55E"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+</svg>

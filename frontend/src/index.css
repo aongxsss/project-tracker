@@ -1,0 +1,151 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'DM Sans', sans-serif;
+  background: #F5F4F1;
+  color: #1A1A1A;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Loading spinner */
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #E8E6E0;
+  border-top-color: #7F77DD;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Table row hover shows actions */
+.table-row:hover {
+  background: #F9F8F5;
+}
+.table-row:hover .row-actions {
+  opacity: 1 !important;
+}
+
+/* Stat card value responsive */
+.stat-value {
+  font-size: 28px;
+}
+
+/* ========== TABLET (768px – 1279px) ========== */
+@media (min-width: 768px) and (max-width: 1279px) {
+  /* Sidebar collapsed to 60px, icons only */
+  .sidebar {
+    width: 60px !important;
+    min-width: 60px !important;
+    padding: 24px 8px !important;
+  }
+  .sidebar-label { display: none !important; }
+  .sidebar-icon-only { display: block !important; }
+
+  /* Sidebar nav buttons */
+  .sidebar button {
+    justify-content: center !important;
+    padding: 8px !important;
+  }
+
+  /* Stat cards: 2x2 */
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Hide comment column */
+  .comment-col { display: none !important; }
+
+  /* Actions always visible */
+  .row-actions { opacity: 1 !important; }
+
+}
+
+
+/* Note canvas row hover shows delete */
+.note-row:hover .note-del {
+  opacity: 1 !important;
+}
+
+/* Insight charts responsive */
+@media (max-width: 900px) {
+  .insight-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ========== MOBILE (< 768px) ========== */
+@media (max-width: 767px) {
+  /* Hide desktop sidebar */
+  .sidebar {
+    position: fixed !important;
+    left: -260px !important;
+    top: 0 !important;
+    height: 100vh !important;
+    z-index: 100 !important;
+    transition: left 0.25s ease !important;
+    width: 240px !important;
+  }
+  .sidebar.sidebar-open {
+    left: 0 !important;
+  }
+  .mobile-backdrop { display: block !important; }
+
+  /* Show mobile header */
+  .mobile-header { display: flex !important; }
+
+  /* Stat cards: 1 column */
+  .stat-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .stat-value { font-size: 22px !important; }
+
+  /* Overview: single column */
+  .overview-columns {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Section title smaller */
+  .section-title { font-size: 14px !important; }
+
+  /* Overview padding */
+  .overview-columns > div:first-child > div,
+  .overview-columns > div:last-child > div {
+    /* stacked in order already via flex-direction */
+  }
+
+  /* Tracking controls stack vertically */
+  .tracking-controls {
+    flex-direction: column !important;
+  }
+  .add-project-btn {
+    width: 100% !important;
+  }
+
+  /* Hide table, show mobile cards */
+  .table-wrapper { display: none !important; }
+  .mobile-cards { display: flex !important; }
+
+  /* Modal: bottom sheet */
+  .modal-backdrop {
+    align-items: flex-end !important;
+  }
+  .modal-sheet {
+    border-radius: 16px 16px 0 0 !important;
+    max-width: 100% !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* Touch targets */
+  button, input, select, textarea, label {
+    min-height: 44px;
+  }
+}
