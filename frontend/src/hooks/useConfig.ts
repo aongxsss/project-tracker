@@ -39,12 +39,11 @@ export function useConfig(enabled = true) {
     setStatuses((prev) => prev.map((s) => (s.name === name ? { ...s, color } : s)))
   }
 
-  const addBrand = async (name: string, color: string): Promise<ConfigItem> => {
+  const addBrand = async (name: string, color: string): Promise<void> => {
     const res = await fetch(`${API}/api/brands`, { ...C, method: "POST", headers: J, body: JSON.stringify({ name, color }) })
     if (!res.ok) throw new Error((await res.json()).detail)
     const created: ConfigItem = await res.json()
     setBrands((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)))
-    return created
   }
 
   const deleteBrand = async (name: string, force = false): Promise<void> => {
@@ -54,12 +53,11 @@ export function useConfig(enabled = true) {
     setBrands((prev) => prev.filter((b) => b.name !== name))
   }
 
-  const addStatus = async (name: string, color: string): Promise<ConfigItem> => {
+  const addStatus = async (name: string, color: string): Promise<void> => {
     const res = await fetch(`${API}/api/statuses`, { ...C, method: "POST", headers: J, body: JSON.stringify({ name, color }) })
     if (!res.ok) throw new Error((await res.json()).detail)
     const created: ConfigItem = await res.json()
     setStatuses((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)))
-    return created
   }
 
   const deleteStatus = async (name: string): Promise<void> => {

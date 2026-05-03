@@ -14,14 +14,7 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "typeRoots": ["/tmp/pf_ide_deps/node_modules/@types"],
-    "paths": {
-      "react": ["/tmp/pf_ide_deps/node_modules/@types/react"],
-      "react/jsx-runtime": ["/tmp/pf_ide_deps/node_modules/@types/react/jsx-runtime"],
-      "react-dom": ["/tmp/pf_ide_deps/node_modules/@types/react-dom"],
-      "react-dom/client": ["/tmp/pf_ide_deps/node_modules/@types/react-dom"]
-    }
+    "noFallthroughCasesInSwitch": true
   },
   "include": ["src"]
 }
