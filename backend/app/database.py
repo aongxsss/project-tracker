@@ -102,7 +102,22 @@ async def _migrate(pool: asyncpg.Pool) -> None:
                 )
             """)
 
-        # Add user_id column to projects if not present
+        # Create projects table if not exists
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS projects (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                name VARCHAR(200) NOT NULL,
+                brand VARCHAR(50) NOT NULL,
+                pm VARCHAR(100) NOT NULL,
+                status VARCHAR(50) NOT NULL,
+                due_date DATE NOT NULL,
+                comment TEXT NOT NULL DEFAULT '',
+                user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                created_at TIMESTAMPTZ DEFAULT now()
+            )
+        """)
+
+        # Add user_id column to projects if not present (for old installs)
         await conn.execute("""
             ALTER TABLE projects ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id)
         """)
