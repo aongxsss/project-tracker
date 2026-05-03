@@ -1,8 +1,11 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from pydantic import BaseModel, Field
 import asyncpg
 from app.database import get_pool, seed_user_defaults
 from app.auth import hash_password, verify_password, create_token, get_current_user, COOKIE_NAME
+
+_IS_PROD = os.environ.get("ENVIRONMENT", "development") == "production"
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -35,8 +38,8 @@ def _set_cookie(response: Response, token: str) -> None:
         value=token,
         httponly=True,
         max_age=7 * 24 * 3600,
-        samesite="lax",
-        secure=False,
+        samesite="none" if _IS_PROD else "lax",
+        secure=_IS_PROD,
     )
 
 
