@@ -132,7 +132,7 @@ export function Notes({ notes, loading, error, onAdd, onUpdate, onDelete, onReor
               <div style={{ fontSize: 11, fontWeight: 600, color: "#999", letterSpacing: "0.08em", margin: "0 0 12px" }}>
                 PINNED
               </div>
-              <div className="notes-grid" style={{ columnGap: 16 }}>
+              <div className="notes-grid">
                 {pinned.map(renderCard)}
               </div>
             </>
@@ -145,7 +145,7 @@ export function Notes({ notes, loading, error, onAdd, onUpdate, onDelete, onReor
                   OTHERS
                 </div>
               )}
-              <div className="notes-grid" style={{ columnGap: 16 }}>
+              <div className="notes-grid">
                 {others.map(renderCard)}
               </div>
             </>

@@ -109,14 +109,16 @@ body {
 .sheet-row-num:hover .sheet-row-label { display: none; }
 .sheet-row-num:hover .sheet-row-del { display: block !important; }
 
-/* Notes masonry grid (Google Keep-style) */
+/* Notes grid — CSS Grid keeps left-to-right DOM order (column-count breaks it) */
 .notes-grid {
-  column-count: 4;
-  column-gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  align-items: start;
 }
-@media (max-width: 1400px) { .notes-grid { column-count: 3; } }
-@media (max-width: 1024px) { .notes-grid { column-count: 2; } }
-@media (max-width: 600px)  { .notes-grid { column-count: 1; } }
+@media (max-width: 1400px) { .notes-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 1024px) { .notes-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px)  { .notes-grid { grid-template-columns: repeat(1, 1fr); } }
 
 /* Rich editor list/paragraph resets */
 .rich-editor-content ul,

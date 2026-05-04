@@ -133,7 +133,6 @@ export function NoteCard({
       style={{
         background: cardBg, border: `1px solid ${border}`, borderRadius: 12,
         padding: "14px 16px 10px", boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-        breakInside: "avoid", marginBottom: 16,
         transition: "box-shadow 0.15s, opacity 0.15s",
         opacity: dragging ? 0.4 : 1, position: "relative",
       }}
@@ -196,9 +195,9 @@ export function NoteCard({
         }}
         className="note-card-footer"
       >
-        {/* Toolbar row */}
-        <div style={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap", minHeight: 28 }}>
-          {/* Formatting buttons — preventDefault keeps editor focused */}
+        {/* Toolbar — single row, Save+Delete pinned right */}
+        <div style={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {/* Format buttons */}
           {FORMAT_BUTTONS.map(({ cmd, label, title, style }) => (
             <button
               key={cmd}
@@ -209,9 +208,9 @@ export function NoteCard({
               style={{
                 background: active[cmd] ? "rgba(0,0,0,0.08)" : "transparent",
                 border: "none", cursor: "pointer",
-                padding: "3px 6px", borderRadius: 5,
-                fontSize: 12, color: active[cmd] ? "#1A1A1A" : "#666",
-                fontFamily: "inherit", minWidth: 22, minHeight: 22, flexShrink: 0,
+                padding: "2px 5px", borderRadius: 4,
+                fontSize: 11, color: active[cmd] ? "#1A1A1A" : "#666",
+                fontFamily: "inherit", minWidth: 20, minHeight: 20, lineHeight: 1,
                 ...style,
               }}
             >
@@ -220,7 +219,7 @@ export function NoteCard({
           ))}
 
           {/* Divider */}
-          <span style={{ width: 1, height: 16, background: "#E8E6E0", flexShrink: 0, margin: "0 4px" }} />
+          <span style={{ width: 1, height: 14, background: "#E8E6E0", margin: "0 3px", flexShrink: 0 }} />
 
           {/* Palette */}
           <div style={{ position: "relative", flexShrink: 0 }} ref={paletteRef}>
@@ -229,7 +228,7 @@ export function NoteCard({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => setShowPalette((s) => !s)}
               title="Background color"
-              style={{ background: "none", border: "none", cursor: "pointer", color: "#666", padding: "3px 5px", display: "flex", alignItems: "center", borderRadius: 5 }}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#666", padding: "2px 4px", display: "flex", alignItems: "center", borderRadius: 4 }}
             >
               <PaletteIcon />
             </button>
@@ -237,7 +236,7 @@ export function NoteCard({
               <div style={{ position: "absolute", bottom: "100%", left: 0, marginBottom: 6, background: "#fff", border: "1px solid #E8E6E0", borderRadius: 10, padding: 8, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 10 }}>
                 {COLORS.map((c) => (
                   <button key={c} type="button" onClick={() => setColor(c)} title={c}
-                    style={{ width: 24, height: 24, borderRadius: "50%", background: c, border: note.color === c ? "2px solid #1A1A1A" : "1px solid #E8E6E0", cursor: "pointer", padding: 0 }} />
+                    style={{ width: 22, height: 22, borderRadius: "50%", background: c, border: note.color === c ? "2px solid #1A1A1A" : "1px solid #E8E6E0", cursor: "pointer", padding: 0 }} />
                 ))}
               </div>
             )}
@@ -245,30 +244,30 @@ export function NoteCard({
 
           <div style={{ flex: 1 }} />
 
-          {/* Save */}
-          <button
-            type="button"
-            onClick={handleSaveClick}
-            disabled={saveStatus === "saving"}
-            style={{
-              background: saveStatus === "saved" ? "#E8F5EE" : "#F0EFFF",
-              color: saveStatus === "saved" ? "#1D9E75" : "#7F77DD",
-              border: "none", borderRadius: 6, padding: "3px 12px",
-              fontSize: 12, fontWeight: 500, cursor: saveStatus === "saving" ? "default" : "pointer",
-              fontFamily: "inherit", minHeight: 24, flexShrink: 0, transition: "background 0.2s, color 0.2s",
-            }}
-          >
-            {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "Saved ✓" : "Save"}
-          </button>
-
-          {/* Delete button */}
-          <button
-            type="button"
-            onClick={() => { if (!title.trim() && !content.replace(/<[^>]+>/g, "").trim()) { onDelete(note.id); return } setConfirmDelete(true) }}
-            style={{ background: "#FDECEA", color: "#C0392B", border: "none", borderRadius: 6, padding: "3px 12px", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", minHeight: 24, flexShrink: 0 }}
-          >
-            Delete
-          </button>
+          {/* Save + Delete */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={handleSaveClick}
+              disabled={saveStatus === "saving"}
+              style={{
+                background: saveStatus === "saved" ? "#E8F5EE" : "#F0EFFF",
+                color: saveStatus === "saved" ? "#1D9E75" : "#7F77DD",
+                border: "none", borderRadius: 5, padding: "2px 9px",
+                fontSize: 11, fontWeight: 500, cursor: saveStatus === "saving" ? "default" : "pointer",
+                fontFamily: "inherit", minHeight: 20, lineHeight: 1, transition: "background 0.2s, color 0.2s",
+              }}
+            >
+              {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "Saved ✓" : "Save"}
+            </button>
+            <button
+              type="button"
+              onClick={() => { if (!title.trim() && !content.replace(/<[^>]+>/g, "").trim()) { onDelete(note.id); return } setConfirmDelete(true) }}
+              style={{ background: "#FDECEA", color: "#C0392B", border: "none", borderRadius: 5, padding: "2px 9px", fontSize: 11, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", minHeight: 20, lineHeight: 1 }}
+            >
+              Delete
+            </button>
+          </div>
         </div>
 
         {/* Delete confirm row */}
