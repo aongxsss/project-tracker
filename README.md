@@ -5,9 +5,9 @@ A project tracking web app for AE teams — manage projects across brands, track
 ## Features
 
 - **Project tracking** — manage projects with brand, assignee, priority, dual status, and deadlines
-- **Project detail panel** — ClickUp-style panel with description, file attachments, and per-project threads
+- **Project detail panel** — description editor, file attachments, and per-project threads
 - **Overview & insights** — stat cards, workload charts, status distribution, and project calendar
-- **Notes** — Google Keep-style sticky notes with rich text and pinning
+- **Notes** — sticky notes with rich text and pinning
 - **Spreadsheet** — custom columns, inline editing, and CSV/Excel export
 - **Per-user workspace** — fully isolated data per account
 - **Responsive** — desktop, tablet, and mobile
