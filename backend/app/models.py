@@ -20,6 +20,7 @@ class ProjectBase(BaseModel):
     assignee: str = ""
     priority: str = ""
     comment: str = ""
+    description: str = ""
 
 
 class ProjectCreate(ProjectBase):

@@ -227,6 +227,37 @@ async def _migrate(pool: asyncpg.Pool) -> None:
         await conn.execute("UPDATE projects SET customer_name = pm WHERE customer_name = ''")
         await conn.execute("UPDATE projects SET internal_status = status WHERE internal_status = ''")
 
+        # Project description (rich notes per project)
+        await conn.execute("ALTER TABLE projects ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT ''")
+
+        # Project threads (team chat per project)
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS project_threads (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                display_name VARCHAR(100) NOT NULL DEFAULT '',
+                message TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS threads_project_idx ON project_threads(project_id, created_at)")
+
+        # Project attachments (files stored as bytea, max 10MB each)
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS project_attachments (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                original_name TEXT NOT NULL,
+                content_type TEXT NOT NULL DEFAULT 'application/octet-stream',
+                file_size INT NOT NULL DEFAULT 0,
+                data BYTEA NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS attachments_project_idx ON project_attachments(project_id, created_at)")
+
         # Seed defaults for existing users who have none
         users = await conn.fetch("SELECT id FROM users")
         for u in users:
