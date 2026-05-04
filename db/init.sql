@@ -35,3 +35,16 @@ CREATE TABLE IF NOT EXISTS projects (
   user_id UUID REFERENCES users(id),
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS notes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',
+  color VARCHAR(7) NOT NULL DEFAULT '#FFFFFF',
+  pinned BOOLEAN NOT NULL DEFAULT false,
+  position INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS notes_user_idx ON notes(user_id, pinned DESC, position);

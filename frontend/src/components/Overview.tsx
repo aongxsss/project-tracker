@@ -2,18 +2,9 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 import { Project, ConfigItem } from "../types"
 import { StatCard } from "./StatCard"
 import { BrandBadge } from "./BrandBadge"
+import { WorkloadList } from "./WorkloadList"
 import { InsightCharts } from "./InsightCharts"
-import { NoteCanvas } from "./NoteCanvas"
 import { ProjectCalendar } from "./ProjectCalendar"
-
-function hexBg(hex: string): string {
-  try {
-    const r = parseInt(hex.slice(1, 3), 16)
-    const g = parseInt(hex.slice(3, 5), 16)
-    const b = parseInt(hex.slice(5, 7), 16)
-    return `rgba(${r},${g},${b},0.13)`
-  } catch { return "#F0F0F0" }
-}
 
 function formatDate(d: string) {
   return new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
@@ -34,11 +25,11 @@ interface Props {
   allProjects: Project[]
   brands: ConfigItem[]
   statuses: ConfigItem[]
-  notes: string
-  onSaveNotes: (notes: string) => Promise<void>
+  clientStatuses: ConfigItem[]
+  assignees: ConfigItem[]
 }
 
-export function Overview({ projects, allProjects, brands, statuses, notes, onSaveNotes }: Props) {
+export function Overview({ projects, allProjects, brands, statuses, clientStatuses, assignees }: Props) {
   const bc = (name: string) => brands.find((b) => b.name === name)?.color ?? "#888888"
   const sc = (name: string) => statuses.find((s) => s.name === name)?.color ?? "#888888"
 
@@ -54,11 +45,31 @@ export function Overview({ projects, allProjects, brands, statuses, notes, onSav
   }).length
   const donePct = total > 0 ? Math.round((done / total) * 100) : 0
 
-  const brandCounts = brands.map((b) => ({ brand: b, count: projects.filter((p) => p.brand === b.name).length }))
-  const maxBrand = Math.max(...brandCounts.map((b) => b.count), 1)
+  const brandWorkload = brands.map((b) => ({
+    name: b.name,
+    color: b.color,
+    count: projects.filter((p) => p.brand === b.name).length,
+  }))
 
+  const ASSIGNEE_PALETTE = ["#7F77DD", "#2B7FD4", "#1D9E75", "#C07D15", "#D85A30", "#C0392B", "#8E44AD", "#16A085"]
+  const assigneeWorkload = (() => {
+    const map = new Map<string, number>()
+    projects.forEach((p) => {
+      const key = (p.assignee || "").trim() || "Unassigned"
+      map.set(key, (map.get(key) ?? 0) + 1)
+    })
+    return [...map.entries()]
+      .map(([name, count], i) => ({
+        name,
+        color: assignees.find((a) => a.name === name)?.color ?? ASSIGNEE_PALETTE[i % ASSIGNEE_PALETTE.length],
+        count,
+      }))
+      .sort((a, b) => b.count - a.count)
+  })()
 
-  const recent = [...projects].sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime()).slice(0, 5)
+  const recent = [...projects]
+    .sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime())
+    .slice(0, 6)
 
   if (total === 0 && allProjects.length === 0) {
     return (
@@ -71,12 +82,28 @@ export function Overview({ projects, allProjects, brands, statuses, notes, onSav
     )
   }
 
+  const CARD: React.CSSProperties = { background: "#fff", border: "1px solid #E8E6E0", borderRadius: 12, padding: "20px 24px", minHeight: 160 }
+
+  const internalPieData = statuses.map((s) => ({
+    name: s.name,
+    value: projects.filter((p) => p.internal_status === s.name).length,
+    color: s.color,
+    pct: Math.round(projects.filter((p) => p.internal_status === s.name).length / (total || 1) * 100),
+  })).filter((d) => d.value > 0)
+
+  const clientPieData = clientStatuses.map((s) => ({
+    name: s.name,
+    value: projects.filter((p) => p.client_status === s.name).length,
+    color: s.color,
+    pct: Math.round(projects.filter((p) => p.client_status === s.name).length / (total || 1) * 100),
+  })).filter((d) => d.value > 0)
+
   return (
     <div className="page-content" style={{ padding: "32px 32px 48px", width: "100%", boxSizing: "border-box" }}>
       <h1 style={{ fontSize: 22, fontWeight: 600, margin: "0 0 24px", color: "#1A1A1A" }}>Overview</h1>
 
       {/* Stat Cards */}
-      <div className="stat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 32 }}>
+      <div className="stat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
         <StatCard label="Total Tasks" value={total}>
           <span style={{ fontSize: 12, color: "#888", background: "#F0EFF9", borderRadius: 999, padding: "2px 10px", display: "inline-block", marginTop: 4 }}>All brands</span>
         </StatCard>
@@ -96,100 +123,99 @@ export function Overview({ projects, allProjects, brands, statuses, notes, onSav
         </StatCard>
       </div>
 
-      {/* Main columns: Left = Notes + Calendar | Right = Recent Activity + Brand Workload + Status Distribution */}
-      <div className="overview-columns" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "start" }}>
+      {/* Row A: Calendar (wide) | Recent Activity */}
+      <div className="overview-row" style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 20, alignItems: "stretch", marginBottom: 20 }}>
+        <ProjectCalendar projects={projects} brands={brands} statuses={statuses} compact />
 
-        {/* Left */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <NoteCanvas initialValue={notes} onSave={onSaveNotes} />
-          <ProjectCalendar projects={projects} brands={brands} statuses={statuses} compact />
-        </div>
-
-        {/* Right: Recent Activity → Brand Workload → Status Distribution */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-
-          {/* 1. Recent Activity */}
-          <div style={{ background: "#fff", border: "1px solid #E8E6E0", borderRadius: 12, padding: "20px 24px" }}>
-            <h2 className="section-title" style={{ fontSize: 15, fontWeight: 500, margin: "0 0 16px", color: "#1A1A1A" }}>Recent Activity</h2>
-            {recent.length === 0 ? (
-              <div style={{ fontSize: 13, color: "#999" }}>No tasks yet</div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {recent.map((p) => (
-                  <div key={p.id} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: sc(p.internal_status), flexShrink: 0, marginTop: 4 }} />
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
-                      <div style={{ fontSize: 12, color: "#999", marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
-                        <BrandBadge brand={p.brand} color={bc(p.brand)} /> · {p.customer_name} · Due {formatDate(p.due_date)}
-                        {(() => { const l = daysLabel(p.due_date, p.internal_status); return l ? <span style={{ color: l.color, marginLeft: 2 }}>· {l.text}</span> : null })()}
-                      </div>
+        <div style={CARD}>
+          <h2 className="section-title" style={{ fontSize: 15, fontWeight: 500, margin: "0 0 16px", color: "#1A1A1A" }}>Recent Activity</h2>
+          {recent.length === 0 ? (
+            <div style={{ fontSize: 13, color: "#999" }}>No tasks yet</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {recent.map((p) => (
+                <div key={p.id} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: sc(p.internal_status), flexShrink: 0, marginTop: 4 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+                    <div style={{ fontSize: 12, color: "#999", marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+                      <BrandBadge brand={p.brand} color={bc(p.brand)} /> · {p.customer_name} · Due {formatDate(p.due_date)}
+                      {(() => { const l = daysLabel(p.due_date, p.internal_status); return l ? <span style={{ color: l.color, marginLeft: 2 }}>· {l.text}</span> : null })()}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* 2. Brand Workload */}
-          <div style={{ background: "#fff", border: "1px solid #E8E6E0", borderRadius: 12, padding: "20px 24px" }}>
-            <h2 className="section-title" style={{ fontSize: 15, fontWeight: 500, margin: "0 0 16px", color: "#1A1A1A" }}>Brand Workload</h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {brandCounts.map(({ brand, count }) => (
-                <div key={brand.name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span style={{ width: 56, fontSize: 12, fontWeight: 500, color: brand.color, flexShrink: 0 }}>{brand.name}</span>
-                  <div style={{ flex: 1, height: 8, background: hexBg(brand.color), borderRadius: 999, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${(count / maxBrand) * 100}%`, background: brand.color, borderRadius: 999, transition: "width 0.4s" }} />
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: "#555", minWidth: 20, textAlign: "right" }}>{count}</span>
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* 3. Status Distribution */}
-          {(() => {
-            const pieData = statuses.map((s) => ({
-              name: s.name,
-              value: projects.filter((p) => p.internal_status === s.name).length,
-              color: s.color,
-              pct: String(Math.round(projects.filter((p) => p.internal_status === s.name).length / (total || 1) * 100)),
-            })).filter((d) => d.value > 0)
-            return (
-              <div style={{ background: "#fff", border: "1px solid #E8E6E0", borderRadius: 12, padding: "20px 24px" }}>
-                <h2 className="section-title" style={{ fontSize: 15, fontWeight: 500, margin: "0 0 4px", color: "#1A1A1A" }}>Status Distribution</h2>
-                {pieData.length === 0 ? (
-                  <div style={{ fontSize: 13, color: "#999", marginTop: 12 }}>No data yet</div>
-                ) : (
-                  <>
-                    <ResponsiveContainer width="100%" height={150}>
-                      <PieChart>
-                        <Pie data={pieData} cx="50%" cy="50%" innerRadius="48%" outerRadius="78%" paddingAngle={2} dataKey="value">
-                          {pieData.map((d, i) => <Cell key={i} fill={d.color} stroke="none" />)}
-                        </Pie>
-                        <Tooltip formatter={(v: number, name: string) => [v, name]} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
-                      {pieData.map((d) => (
-                        <div key={d.name} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-                          <span style={{ width: 10, height: 10, borderRadius: "50%", background: d.color, flexShrink: 0 }} />
-                          <span style={{ flex: 1, color: "#555" }}>{d.name}</span>
-                          <span style={{ fontWeight: 600, color: "#1A1A1A" }}>{d.value}</span>
-                          <span style={{ color: "#bbb", minWidth: 32, textAlign: "right" }}>{d.pct}%</span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )
-          })()}
-
+          )}
         </div>
       </div>
 
-      <InsightCharts projects={projects} statuses={statuses} brands={brands} />
+      {/* Row B: Brand Workload | Assignee Workload */}
+      <div className="overview-row-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "stretch", marginBottom: 20 }}>
+        <WorkloadList title="Brand Workload" items={brandWorkload} total={total} />
+        <WorkloadList title="Assignee Workload" items={assigneeWorkload} total={total} emptyText="No assignees yet" />
+      </div>
+
+      {/* Row C: Client Status Distribution | Internal Status Distribution */}
+      <div className="overview-row-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "stretch", marginBottom: 0 }}>
+        <div style={CARD}>
+          <h2 className="section-title" style={{ fontSize: 15, fontWeight: 500, margin: "0 0 4px", color: "#1A1A1A" }}>Client Status</h2>
+          {clientPieData.length === 0 ? (
+            <div style={{ fontSize: 13, color: "#999", marginTop: 12 }}>No data yet</div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={140}>
+                <PieChart>
+                  <Pie data={clientPieData} cx="50%" cy="50%" innerRadius="48%" outerRadius="78%" paddingAngle={2} dataKey="value">
+                    {clientPieData.map((d, i) => <Cell key={i} fill={d.color} stroke="none" />)}
+                  </Pie>
+                  <Tooltip formatter={(v: number, name: string) => [v, name]} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+                {clientPieData.map((d) => (
+                  <div key={d.name} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: "50%", background: d.color, flexShrink: 0 }} />
+                    <span style={{ flex: 1, color: "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
+                    <span style={{ fontWeight: 600, color: "#1A1A1A" }}>{d.value}</span>
+                    <span style={{ color: "#bbb", minWidth: 32, textAlign: "right" }}>{d.pct}%</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div style={CARD}>
+          <h2 className="section-title" style={{ fontSize: 15, fontWeight: 500, margin: "0 0 4px", color: "#1A1A1A" }}>Internal Status</h2>
+          {internalPieData.length === 0 ? (
+            <div style={{ fontSize: 13, color: "#999", marginTop: 12 }}>No data yet</div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={140}>
+                <PieChart>
+                  <Pie data={internalPieData} cx="50%" cy="50%" innerRadius="48%" outerRadius="78%" paddingAngle={2} dataKey="value">
+                    {internalPieData.map((d, i) => <Cell key={i} fill={d.color} stroke="none" />)}
+                  </Pie>
+                  <Tooltip formatter={(v: number, name: string) => [v, name]} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+                {internalPieData.map((d) => (
+                  <div key={d.name} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: "50%", background: d.color, flexShrink: 0 }} />
+                    <span style={{ flex: 1, color: "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
+                    <span style={{ fontWeight: 600, color: "#1A1A1A" }}>{d.value}</span>
+                    <span style={{ color: "#bbb", minWidth: 32, textAlign: "right" }}>{d.pct}%</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      <InsightCharts projects={projects} brands={brands} />
     </div>
   )
 }

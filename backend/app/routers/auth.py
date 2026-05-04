@@ -25,11 +25,6 @@ class UserOut(BaseModel):
     id: str
     username: str
     display_name: str
-    notes: str = ""
-
-
-class NotesUpdate(BaseModel):
-    notes: str
 
 
 def _set_cookie(response: Response, token: str) -> None:
@@ -67,7 +62,7 @@ async def register(body: RegisterRequest, response: Response, pool: asyncpg.Pool
             raise HTTPException(status_code=409, detail="Username already taken")
         await seed_user_defaults(conn, row["id"])
     _set_cookie(response, create_token(str(row["id"])))
-    return {"id": str(row["id"]), "username": row["username"], "display_name": row["display_name"], "notes": ""}
+    return {"id": str(row["id"]), "username": row["username"], "display_name": row["display_name"]}
 
 
 @router.post("/login", response_model=UserOut)
@@ -79,19 +74,13 @@ async def login(body: LoginRequest, response: Response, pool: asyncpg.Pool = Dep
     if not row or not verify_password(body.password, row["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     _set_cookie(response, create_token(str(row["id"])))
-    return {"id": str(row["id"]), "username": row["username"], "display_name": row["display_name"], "notes": ""}
+    return {"id": str(row["id"]), "username": row["username"], "display_name": row["display_name"]}
 
 
 @router.get("/me", response_model=UserOut)
 async def me(current_user: dict = Depends(get_current_user), pool: asyncpg.Pool = Depends(get_pool)):
-    row = await pool.fetchrow("SELECT id, username, display_name, notes FROM users WHERE id=$1", current_user["id"])
-    return {"id": str(row["id"]), "username": row["username"], "display_name": row["display_name"], "notes": row["notes"] or ""}
-
-
-@router.patch("/notes")
-async def save_notes(body: NotesUpdate, current_user: dict = Depends(get_current_user), pool: asyncpg.Pool = Depends(get_pool)):
-    await pool.execute("UPDATE users SET notes=$1 WHERE id=$2", body.notes, current_user["id"])
-    return {"status": "ok"}
+    row = await pool.fetchrow("SELECT id, username, display_name FROM users WHERE id=$1", current_user["id"])
+    return {"id": str(row["id"]), "username": row["username"], "display_name": row["display_name"]}
 
 
 @router.post("/logout")

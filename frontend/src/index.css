@@ -69,12 +69,42 @@ body {
 }
 
 
-/* Note canvas row hover shows delete */
-.note-row:hover .note-del {
+/* Note card hover reveals footer actions */
+.note-card:hover .note-card-footer {
   opacity: 1 !important;
 }
 
-/* Insight charts responsive */
+/* Notes masonry grid (Google Keep-style) */
+.notes-grid {
+  column-count: 4;
+  column-gap: 16px;
+}
+@media (max-width: 1400px) { .notes-grid { column-count: 3; } }
+@media (max-width: 1024px) { .notes-grid { column-count: 2; } }
+@media (max-width: 600px)  { .notes-grid { column-count: 1; } }
+
+/* Rich editor list/paragraph resets */
+.rich-editor-content ul,
+.rich-editor-content ol { margin: 4px 0; padding-left: 22px; }
+.rich-editor-content li { margin: 2px 0; }
+.rich-editor-content p { margin: 0; }
+
+/* Overview rows + insight rows responsive */
+@media (max-width: 1100px) {
+  .overview-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 1200px) {
+  .overview-row-3 {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+@media (max-width: 800px) {
+  .overview-row-3 {
+    grid-template-columns: 1fr !important;
+  }
+}
 @media (max-width: 900px) {
   .insight-row {
     grid-template-columns: 1fr !important;
@@ -117,7 +147,9 @@ body {
   .stat-value { font-size: 22px !important; }
 
   /* Overview: single column */
-  .overview-columns {
+  .overview-columns,
+  .overview-row,
+  .overview-row-3 {
     grid-template-columns: 1fr !important;
   }
 

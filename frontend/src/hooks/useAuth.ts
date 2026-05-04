@@ -11,7 +11,6 @@ export interface AuthUser {
   id: string
   username: string
   display_name: string
-  notes: string
 }
 
 export function useAuth() {
@@ -56,13 +55,5 @@ export function useAuth() {
     setUser(null)
   }
 
-  const saveNotes = async (notes: string): Promise<void> => {
-    await fetch(`${API}/api/auth/notes`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      credentials: "include", body: JSON.stringify({ notes }),
-    })
-    setUser((u) => u ? { ...u, notes } : u)
-  }
-
-  return { user, loading, login, register, logout, saveNotes }
+  return { user, loading, login, register, logout }
 }

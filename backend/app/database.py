@@ -145,6 +145,22 @@ async def _migrate(pool: asyncpg.Pool) -> None:
             )
         """)
 
+        # Notes table (Google Keep-style cards)
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS notes (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                title TEXT NOT NULL DEFAULT '',
+                content TEXT NOT NULL DEFAULT '',
+                color VARCHAR(7) NOT NULL DEFAULT '#FFFFFF',
+                pinned BOOLEAN NOT NULL DEFAULT false,
+                position INT NOT NULL DEFAULT 0,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS notes_user_idx ON notes(user_id, pinned DESC, position)")
+
         # Create projects table if not exists
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS projects (

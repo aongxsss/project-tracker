@@ -1,12 +1,11 @@
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, LineChart, Line, ComposedChart, Cell,
+  ResponsiveContainer, LineChart, Line, Cell,
 } from "recharts"
 import { Project, ConfigItem } from "../types"
 
 interface Props {
   projects: Project[]
-  statuses: ConfigItem[]
   brands: ConfigItem[]
 }
 
@@ -23,13 +22,14 @@ function last6Months() {
   })
 }
 
-function dueByMonth(projects: Project[], months: ReturnType<typeof last6Months>, statuses: ConfigItem[]) {
+function dueByMonth(projects: Project[], months: ReturnType<typeof last6Months>) {
   return months.map(({ key, label }) => {
-    const row: Record<string, string | number> = { label }
-    statuses.forEach((s) => {
-      row[s.name] = projects.filter((p) => p.due_date.slice(0, 7) === key && p.internal_status === s.name).length
-    })
-    return row
+    const inMonth = projects.filter((p) => p.due_date.slice(0, 7) === key)
+    return {
+      label,
+      Done: inMonth.filter((p) => p.internal_status === "Done").length,
+      Open: inMonth.filter((p) => p.internal_status !== "Done").length,
+    }
   })
 }
 
@@ -60,24 +60,54 @@ function agingBuckets(projects: Project[]) {
   }))
 }
 
-function aeByStatus(projects: Project[], statuses: ConfigItem[]) {
-  const aes = [...new Set(projects.map((p) => p.customer_name))].sort()
-  return aes.map((ae) => {
-    const row: Record<string, string | number> = { name: ae.split(" ")[0] }
-    statuses.forEach((s) => { row[s.name] = projects.filter((p) => p.customer_name === ae && p.internal_status === s.name).length })
-    return row
-  })
+const PRIORITY_COLORS: Record<string, string> = {
+  low: "#1D9E75",
+  medium: "#C07D15",
+  high: "#D85A30",
+  urgent: "#C0392B",
+  critical: "#C0392B",
 }
 
-function aeWorkloadVsOutput(projects: Project[]) {
-  const map = new Map<string, { name: string; Total: number; Completed: number }>()
+function priorityColor(name: string): string {
+  return PRIORITY_COLORS[name.trim().toLowerCase()] ?? "#7F77DD"
+}
+
+function priorityCounts(projects: Project[]) {
+  const map = new Map<string, number>()
   projects.forEach((p) => {
-    if (!map.has(p.customer_name)) map.set(p.customer_name, { name: p.customer_name.split(" ")[0], Total: 0, Completed: 0 })
-    const r = map.get(p.customer_name)!
-    r.Total++
-    if (p.internal_status === "Done") r.Completed++
+    const k = (p.priority || "Unset").trim() || "Unset"
+    map.set(k, (map.get(k) ?? 0) + 1)
   })
-  return [...map.values()].sort((a, b) => b.Total - a.Total)
+  const order = ["Urgent", "Critical", "High", "Medium", "Low", "Unset"]
+  return [...map.entries()]
+    .map(([name, Tasks]) => ({ name, Tasks, color: priorityColor(name) }))
+    .sort((a, b) => {
+      const ai = order.findIndex((o) => o.toLowerCase() === a.name.toLowerCase())
+      const bi = order.findIndex((o) => o.toLowerCase() === b.name.toLowerCase())
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+    })
+}
+
+function upcomingBuckets(projects: Project[]) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const open = projects.filter((p) => p.internal_status !== "Done")
+  const buckets = [
+    { name: "Overdue", min: -Infinity, max: -1, color: "#C0392B" },
+    { name: "Today", min: 0, max: 0, color: "#D85A30" },
+    { name: "≤3d", min: 1, max: 3, color: "#C07D15" },
+    { name: "≤7d", min: 4, max: 7, color: "#2B7FD4" },
+    { name: "≤14d", min: 8, max: 14, color: "#7F77DD" },
+    { name: "14d+", min: 15, max: Infinity, color: "#1D9E75" },
+  ]
+  return buckets.map((b) => ({
+    name: b.name,
+    Tasks: open.filter((p) => {
+      const diff = Math.round((new Date(p.due_date + "T00:00:00").getTime() - today.getTime()) / 86400000)
+      return diff >= b.min && diff <= b.max
+    }).length,
+    color: b.color,
+  }))
 }
 
 function brandCompletion(projects: Project[], brands: ConfigItem[]) {
@@ -88,6 +118,26 @@ function brandCompletion(projects: Project[], brands: ConfigItem[]) {
       return { name: b.name, Rate: total > 0 ? Math.round((done / total) * 100) : 0, color: b.color, total }
     })
     .filter((d) => d.total > 0)
+}
+
+function assigneeCompletion(projects: Project[]) {
+  const map = new Map<string, { total: number; done: number }>()
+  projects.forEach((p) => {
+    const key = (p.assignee || "Unassigned").trim() || "Unassigned"
+    const r = map.get(key) ?? { total: 0, done: 0 }
+    r.total++
+    if (p.internal_status === "Done") r.done++
+    map.set(key, r)
+  })
+  const palette = ["#7F77DD", "#2B7FD4", "#1D9E75", "#C07D15", "#D85A30", "#C0392B", "#8E44AD", "#16A085"]
+  return [...map.entries()]
+    .map(([name, r], i) => ({
+      name,
+      Rate: r.total > 0 ? Math.round((r.done / r.total) * 100) : 0,
+      total: r.total,
+      color: palette[i % palette.length],
+    }))
+    .sort((a, b) => b.total - a.total)
 }
 
 // ── shared ────────────────────────────────────────────────────────────────────
@@ -113,21 +163,22 @@ const Tip = ({ active, payload, label }: { active?: boolean; payload?: { name: s
 
 // ── component ──────────────────────────────────────────────────────────────────
 
-export function InsightCharts({ projects, statuses, brands }: Props) {
+export function InsightCharts({ projects, brands }: Props) {
   if (projects.length === 0) return null
 
   const months = last6Months()
-  const dueData = dueByMonth(projects, months, statuses)
+  const dueData = dueByMonth(projects, months)
   const trendData = createdVsDone(projects, months)
   const aging = agingBuckets(projects)
-  const aeStatus = aeByStatus(projects, statuses)
-  const aePerf = aeWorkloadVsOutput(projects)
+  const priorities = priorityCounts(projects)
+  const upcoming = upcomingBuckets(projects)
   const brandComp = brandCompletion(projects, brands)
+  const assigneeComp = assigneeCompletion(projects)
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20, marginTop: 8 }}>
 
-      {/* Row 1: Created vs Completed | Aging */}
+      {/* Row 1: Created vs Completed | Aging Open Tasks */}
       <div className="insight-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
         <div style={CARD}>
           <h2 style={T}>Created vs Completed</h2>
@@ -162,80 +213,100 @@ export function InsightCharts({ projects, statuses, brands }: Props) {
         </div>
       </div>
 
-      {/* Row 2: Tasks per AE by Status | Workload vs Output */}
-      <div className="insight-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
+      {/* Row 2: Priority Breakdown | Upcoming Deadlines */}
+      <div className="insight-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "stretch" }}>
         <div style={CARD}>
-          <h2 style={T}>Tasks per AE by Status</h2>
-          <span style={SUB}>Who is working on what type of tasks?</span>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={aeStatus} barSize={22}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F0EEE8" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#999" }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#999" }} axisLine={false} tickLine={false} width={24} />
-              <Tooltip content={<Tip />} cursor={{ fill: "#F9F8F5" }} />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
-              {statuses.map((s, i) => (
-                <Bar key={s.name} dataKey={s.name} stackId="a" fill={s.color}
-                  radius={i === statuses.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
+          <h2 style={T}>Priority Breakdown</h2>
+          <span style={SUB}>How many tasks fall into each priority level?</span>
+          {priorities.length === 0 ? (
+            <div style={{ fontSize: 13, color: "#999" }}>No priority data</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={priorities} layout="vertical" barSize={20}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F0EEE8" horizontal={false} />
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: "#999" }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 13, fill: "#555" }} axisLine={false} tickLine={false} width={72} />
+                <Tooltip content={<Tip />} cursor={{ fill: "#F9F8F5" }} />
+                <Bar dataKey="Tasks" radius={[0, 6, 6, 0]}>
+                  {priorities.map((d, i) => <Cell key={i} fill={d.color} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         <div style={CARD}>
-          <h2 style={T}>Workload vs Output per AE</h2>
-          <span style={SUB}>Who is busy but delivering? Who is accumulating?</span>
+          <h2 style={T}>Upcoming Deadlines</h2>
+          <span style={SUB}>Open tasks bucketed by days until due.</span>
           <ResponsiveContainer width="100%" height={220}>
-            <ComposedChart data={aePerf} barSize={22}>
+            <BarChart data={upcoming} barSize={28}>
               <CartesianGrid strokeDasharray="3 3" stroke="#F0EEE8" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#999" }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#999" }} axisLine={false} tickLine={false} />
               <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#999" }} axisLine={false} tickLine={false} width={24} />
               <Tooltip content={<Tip />} cursor={{ fill: "#F9F8F5" }} />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
-              <Bar dataKey="Total" fill="#E0DEFA" radius={[4, 4, 0, 0]} />
-              <Line type="monotone" dataKey="Completed" stroke="#1D9E75" strokeWidth={2.5} dot={{ r: 5, fill: "#1D9E75" }} activeDot={{ r: 7 }} />
-            </ComposedChart>
+              <Bar dataKey="Tasks" radius={[6, 6, 0, 0]}>
+                {upcoming.map((d, i) => <Cell key={i} fill={d.color} />)}
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Row 3: Tasks by Due Month — full width */}
+      {/* Row 3: Tasks by Due Month — full width, Open vs Done */}
       <div style={CARD}>
         <h2 style={T}>Tasks by Due Month</h2>
-        <span style={SUB}>Workload breakdown per status across upcoming months</span>
+        <span style={SUB}>Open vs completed tasks per month.</span>
         <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={dueData} barSize={24} barGap={3}>
+          <BarChart data={dueData} barSize={28} barGap={4}>
             <CartesianGrid strokeDasharray="3 3" stroke="#F0EEE8" vertical={false} />
             <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#999" }} axisLine={false} tickLine={false} />
             <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#999" }} axisLine={false} tickLine={false} width={24} />
             <Tooltip content={<Tip />} cursor={{ fill: "#F9F8F5" }} />
             <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
-            {statuses.map((s, i) => (
-              <Bar key={s.name} dataKey={s.name} stackId="a" fill={s.color}
-                radius={i === statuses.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />
-            ))}
+            <Bar dataKey="Open" stackId="a" fill="#7F77DD" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="Done" stackId="a" fill="#1D9E75" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Row 4: Completion Rate per Brand — last */}
-      {brandComp.length > 0 && (
-        <div style={CARD}>
-          <h2 style={T}>Completion Rate per Brand</h2>
-          <span style={SUB}>Which brand has the most done tasks? Which one is dragging?</span>
-          <ResponsiveContainer width="100%" height={Math.max(100, brandComp.length * 52)}>
-            <BarChart data={brandComp} layout="vertical" barSize={20}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F0EEE8" horizontal={false} />
-              <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12, fill: "#999" }} axisLine={false} tickLine={false} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 13, fill: "#555" }} axisLine={false} tickLine={false} width={56} />
-              <Tooltip formatter={(v: number) => [`${v}%`, "Completion Rate"]} cursor={{ fill: "#F9F8F5" }} />
-              <Bar dataKey="Rate" radius={[0, 6, 6, 0]}>
-                {brandComp.map((d, i) => <Cell key={i} fill={d.color} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+      {/* Row 4: Completion Rate per Brand | Completion Rate per Assignee */}
+      <div className="insight-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
+        {brandComp.length > 0 && (
+          <div style={CARD}>
+            <h2 style={T}>Completion Rate per Brand</h2>
+            <span style={SUB}>Which brand has the most done tasks? Which is dragging?</span>
+            <ResponsiveContainer width="100%" height={Math.max(140, brandComp.length * 44)}>
+              <BarChart data={brandComp} layout="vertical" barSize={20}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F0EEE8" horizontal={false} />
+                <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12, fill: "#999" }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 13, fill: "#555" }} axisLine={false} tickLine={false} width={72} />
+                <Tooltip formatter={(v: number) => [`${v}%`, "Completion Rate"]} cursor={{ fill: "#F9F8F5" }} />
+                <Bar dataKey="Rate" radius={[0, 6, 6, 0]}>
+                  {brandComp.map((d, i) => <Cell key={i} fill={d.color} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {assigneeComp.length > 0 && (
+          <div style={CARD}>
+            <h2 style={T}>Completion Rate per Assignee</h2>
+            <span style={SUB}>Who is closing out their tasks?</span>
+            <ResponsiveContainer width="100%" height={Math.max(140, assigneeComp.length * 44)}>
+              <BarChart data={assigneeComp} layout="vertical" barSize={20}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F0EEE8" horizontal={false} />
+                <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12, fill: "#999" }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 13, fill: "#555" }} axisLine={false} tickLine={false} width={84} />
+                <Tooltip formatter={(v: number, _n, p) => [`${v}% (${(p?.payload as { total: number })?.total ?? 0} tasks)`, "Completion Rate"]} cursor={{ fill: "#F9F8F5" }} />
+                <Bar dataKey="Rate" radius={[0, 6, 6, 0]}>
+                  {assigneeComp.map((d, i) => <Cell key={i} fill={d.color} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
 
     </div>
   )

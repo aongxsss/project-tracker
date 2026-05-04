@@ -2,14 +2,16 @@ import { useState, useEffect } from "react"
 import { Sidebar } from "./components/Sidebar"
 import { Overview } from "./components/Overview"
 import { Tracking } from "./components/Tracking"
+import { Notes } from "./components/Notes"
 import { ManageModal } from "./components/ManageModal"
 import { LoginPage } from "./components/LoginPage"
 import { useProjects } from "./hooks/useProjects"
 import { useFilters } from "./hooks/useFilters"
 import { useConfig } from "./hooks/useConfig"
 import { useAuth } from "./hooks/useAuth"
+import { useNotes } from "./hooks/useNotes"
 
-type Page = "overview" | "tracking"
+type Page = "overview" | "tracking" | "notes"
 
 export default function App() {
   const [page, setPage] = useState<Page>("overview")
@@ -21,9 +23,10 @@ export default function App() {
     return () => { document.body.style.overflow = '' }
   }, [sidebarOpen])
 
-  const { user, loading: authLoading, login, register, logout, saveNotes } = useAuth()
+  const { user, loading: authLoading, login, register, logout } = useAuth()
   const isAuthenticated = !authLoading && !!user
   const { projects, loading, error, addProject, updateProject, deleteProject } = useProjects(isAuthenticated)
+  const { notes, loading: notesLoading, error: notesError, addNote, updateNote, deleteNote, reorder: reorderNotes } = useNotes(isAuthenticated)
   const {
     brands, statuses, clientStatuses, assignees, priorities,
     addBrand, updateBrand, deleteBrand,
@@ -92,7 +95,17 @@ export default function App() {
             Could not reach the API: {error}. Is the backend running?
           </div>
         ) : page === "overview" ? (
-          <Overview projects={filtered} allProjects={projects} brands={brands} statuses={statuses} notes={user?.notes ?? ""} onSaveNotes={saveNotes} />
+          <Overview projects={filtered} allProjects={projects} brands={brands} statuses={statuses} clientStatuses={clientStatuses} assignees={assignees} />
+        ) : page === "notes" ? (
+          <Notes
+            notes={notes}
+            loading={notesLoading}
+            error={notesError}
+            onAdd={addNote}
+            onUpdate={updateNote}
+            onDelete={deleteNote}
+            onReorder={reorderNotes}
+          />
         ) : (
           <Tracking
             projects={filtered}

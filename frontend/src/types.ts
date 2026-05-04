@@ -21,3 +21,17 @@ export interface ConfigItem {
   name: string
   color: string
 }
+
+export interface Note {
+  id: string
+  title: string
+  content: string
+  color: string
+  pinned: boolean
+  position: number
+  created_at: string
+  updated_at: string
+}
+
+export type NoteInput = Pick<Note, "title" | "content" | "color" | "pinned">
+export type NotePatch = Partial<Pick<Note, "title" | "content" | "color" | "pinned">>
