@@ -38,7 +38,7 @@ def _set_cookie(response: Response, token: str) -> None:
         value=token,
         httponly=True,
         max_age=7 * 24 * 3600,
-        samesite="none" if _IS_PROD else "lax",
+        samesite="lax",
         secure=_IS_PROD,
     )
 
@@ -95,5 +95,5 @@ async def save_notes(body: NotesUpdate, current_user: dict = Depends(get_current
 
 @router.post("/logout")
 async def logout(response: Response):
-    response.delete_cookie(COOKIE_NAME)
+    response.delete_cookie(COOKIE_NAME, httponly=True, samesite="lax", secure=_IS_PROD)
     return {"status": "ok"}
