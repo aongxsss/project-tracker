@@ -4,17 +4,13 @@ A project tracking web app for AE teams — manage projects across brands, track
 
 ## Features
 
-- **Project tracking** — create, edit, and delete projects with brand, customer, assignee, priority, dual status (internal + client), and due date
-- **Project detail panel** — ClickUp-style side panel with full metadata, inline description editor, file attachments, and threaded chat per project
-- **Threads** — per-project chat with file attachments; images show inline preview, other files as download chips; files staged before send
-- **File attachments** — upload files (max 10 MB each) stored per project; embedded inline in description as download links
-- **Brand & status management** — custom brands, internal statuses, client statuses, assignees, and priorities with colour coding
-- **Overview dashboard** — stat cards, status distribution, brand workload, assignee workload, and a project calendar
-- **Insight charts** — created vs completed trend, aging tasks, workload per assignee, completion rate per brand, and more
-- **Notes canvas** — Google Keep-style sticky notes with rich text, pinning, and colour coding
-- **Spreadsheet** — per-user sheets with custom columns, inline editing, and CSV/Excel export
-- **Per-user data** — each account has isolated projects, config, notes, threads, and attachments
-- **Responsive** — works on desktop, tablet, and mobile
+- **Project tracking** — manage projects with brand, assignee, priority, dual status, and deadlines
+- **Project detail panel** — ClickUp-style panel with description, file attachments, and per-project threads
+- **Overview & insights** — stat cards, workload charts, status distribution, and project calendar
+- **Notes** — Google Keep-style sticky notes with rich text and pinning
+- **Spreadsheet** — custom columns, inline editing, and CSV/Excel export
+- **Per-user workspace** — fully isolated data per account
+- **Responsive** — desktop, tablet, and mobile
 
 ## Tech Stack
 
@@ -64,33 +60,6 @@ docker compose up --build
 ### 4. Register an account
 
 Open http://localhost:5173 and create an account. Each account gets its own isolated workspace with default brands, statuses, and priorities pre-loaded.
-
-## Deployment
-
-Frontend → [Vercel](https://vercel.com) · Backend + Database → [Railway](https://railway.app)
-
-### Backend (Railway)
-
-1. Create a new project on Railway
-2. Add a **PostgreSQL** database service
-3. Deploy from this repo with **Root Directory** set to `backend`
-4. Set environment variables:
-
-```
-DATABASE_URL=${{Postgres.DATABASE_URL}}
-SECRET_KEY=<long-random-string>
-ALLOWED_ORIGINS=https://your-app.vercel.app
-```
-
-### Frontend (Vercel)
-
-1. Import this repo on Vercel
-2. Set **Root Directory** to `frontend`
-3. Set environment variable:
-
-```
-VITE_API_URL=https://your-backend.up.railway.app
-```
 
 ## Project Structure
 
