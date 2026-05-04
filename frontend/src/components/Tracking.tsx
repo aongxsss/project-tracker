@@ -122,7 +122,7 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
     <div className="page-content" style={{ padding: "32px 32px 48px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", flex: 1 }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 600, margin: 0, color: "#1A1A1A" }}>Task Tracking</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 600, margin: 0, color: "#1A1A1A" }}>Project Tracking</h1>
         <p style={{ margin: "4px 0 0", fontSize: 13, color: "#999" }}>{filtered.length} of {totalCount} projects</p>
       </div>
 

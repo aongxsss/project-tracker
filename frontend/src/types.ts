@@ -35,3 +35,23 @@ export interface Note {
 
 export type NoteInput = Pick<Note, "title" | "content" | "color" | "pinned">
 export type NotePatch = Partial<Pick<Note, "title" | "content" | "color" | "pinned">>
+
+export interface SheetColumn {
+  id: string
+  name: string
+}
+
+export interface SheetRow {
+  id: string
+  cells: Record<string, string>
+}
+
+export interface Sheet {
+  id: string
+  title: string
+  columns: SheetColumn[]
+  rows: SheetRow[]
+  position: number
+  created_at: string
+  updated_at: string
+}

@@ -8,7 +8,7 @@ load_dotenv()
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import lifespan
-from app.routers import projects, config, auth, notes
+from app.routers import projects, config, auth, notes, sheets
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
@@ -44,3 +44,4 @@ app.include_router(auth.router)
 app.include_router(projects.router)
 app.include_router(config.router)
 app.include_router(notes.router)
+app.include_router(sheets.router)

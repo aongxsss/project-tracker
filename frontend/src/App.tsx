@@ -10,8 +10,10 @@ import { useFilters } from "./hooks/useFilters"
 import { useConfig } from "./hooks/useConfig"
 import { useAuth } from "./hooks/useAuth"
 import { useNotes } from "./hooks/useNotes"
+import { useSheets } from "./hooks/useSheets"
+import { Sheet } from "./components/Sheet"
 
-type Page = "overview" | "tracking" | "notes"
+type Page = "overview" | "tracking" | "notes" | "sheet"
 
 export default function App() {
   const [page, setPage] = useState<Page>("overview")
@@ -27,6 +29,7 @@ export default function App() {
   const isAuthenticated = !authLoading && !!user
   const { projects, loading, error, addProject, updateProject, deleteProject } = useProjects(isAuthenticated)
   const { notes, loading: notesLoading, error: notesError, addNote, updateNote, deleteNote, reorder: reorderNotes } = useNotes(isAuthenticated)
+  const { sheets, loading: sheetsLoading, error: sheetsError, addSheet, updateSheet, deleteSheet } = useSheets(isAuthenticated)
   const {
     brands, statuses, clientStatuses, assignees, priorities,
     addBrand, updateBrand, deleteBrand,
@@ -95,7 +98,16 @@ export default function App() {
             Could not reach the API: {error}. Is the backend running?
           </div>
         ) : page === "overview" ? (
-          <Overview projects={filtered} allProjects={projects} brands={brands} statuses={statuses} clientStatuses={clientStatuses} assignees={assignees} />
+          <Overview projects={filtered} allProjects={projects} brands={brands} statuses={statuses} clientStatuses={clientStatuses} assignees={assignees} activeBrands={activeBrands} />
+        ) : page === "sheet" ? (
+          <Sheet
+            sheets={sheets}
+            loading={sheetsLoading}
+            error={sheetsError}
+            onAdd={addSheet}
+            onUpdate={updateSheet}
+            onDelete={deleteSheet}
+          />
         ) : page === "notes" ? (
           <Notes
             notes={notes}

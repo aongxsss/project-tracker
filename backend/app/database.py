@@ -145,6 +145,21 @@ async def _migrate(pool: asyncpg.Pool) -> None:
             )
         """)
 
+        # Sheets table (spreadsheet-style)
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS sheets (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                title TEXT NOT NULL DEFAULT 'Untitled Sheet',
+                columns JSONB NOT NULL DEFAULT '[]',
+                rows JSONB NOT NULL DEFAULT '[]',
+                position INT NOT NULL DEFAULT 0,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS sheets_user_idx ON sheets(user_id, position)")
+
         # Notes table (Google Keep-style cards)
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS notes (

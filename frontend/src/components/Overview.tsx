@@ -27,9 +27,10 @@ interface Props {
   statuses: ConfigItem[]
   clientStatuses: ConfigItem[]
   assignees: ConfigItem[]
+  activeBrands: string[]
 }
 
-export function Overview({ projects, allProjects, brands, statuses, clientStatuses, assignees }: Props) {
+export function Overview({ projects, allProjects, brands, statuses, clientStatuses, assignees, activeBrands }: Props) {
   const bc = (name: string) => brands.find((b) => b.name === name)?.color ?? "#888888"
   const sc = (name: string) => statuses.find((s) => s.name === name)?.color ?? "#888888"
 
@@ -105,7 +106,9 @@ export function Overview({ projects, allProjects, brands, statuses, clientStatus
       {/* Stat Cards */}
       <div className="stat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
         <StatCard label="Total Tasks" value={total}>
-          <span style={{ fontSize: 12, color: "#888", background: "#F0EFF9", borderRadius: 999, padding: "2px 10px", display: "inline-block", marginTop: 4 }}>All brands</span>
+          <span style={{ fontSize: 12, color: "#888", background: "#F0EFF9", borderRadius: 999, padding: "2px 10px", display: "inline-block", marginTop: 4 }}>
+            {activeBrands.length === brands.length ? "All brands" : activeBrands.join(", ") || "No brands"}
+          </span>
         </StatCard>
         <StatCard label="Completed" value={done}>
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>

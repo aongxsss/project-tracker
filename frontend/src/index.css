@@ -74,6 +74,10 @@ body {
   opacity: 1 !important;
 }
 
+/* Sheet: row number hover reveals delete button */
+.sheet-row-num:hover .sheet-row-label { display: none; }
+.sheet-row-num:hover .sheet-row-del { display: block !important; }
+
 /* Notes masonry grid (Google Keep-style) */
 .notes-grid {
   column-count: 4;
