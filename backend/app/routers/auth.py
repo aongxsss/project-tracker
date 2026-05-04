@@ -41,6 +41,7 @@ def _set_cookie(response: Response, token: str) -> None:
         samesite="lax",
         secure=_IS_PROD,
     )
+    response.headers["Cache-Control"] = "no-store"
 
 
 @router.get("/check-username")
