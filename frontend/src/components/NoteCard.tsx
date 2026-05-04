@@ -197,7 +197,7 @@ export function NoteCard({
         className="note-card-footer"
       >
         {/* Toolbar row */}
-        <div style={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "nowrap", minHeight: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap", minHeight: 28 }}>
           {/* Formatting buttons — preventDefault keeps editor focused */}
           {FORMAT_BUTTONS.map(({ cmd, label, title, style }) => (
             <button
