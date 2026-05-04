@@ -25,6 +25,37 @@ body {
   to { transform: rotate(360deg); }
 }
 
+@keyframes slideInRight {
+  from { transform: translateX(40px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeScaleIn {
+  from { transform: scale(0.96); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* Project name link button (Tracking row + mobile card) */
+.project-link {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: #1A1A1A;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.project-link:hover {
+  color: #7F77DD;
+  text-decoration: underline;
+}
+
 /* Table row hover shows actions */
 .table-row:hover {
   background: #F9F8F5;
@@ -187,6 +218,35 @@ body {
     max-width: 100% !important;
     max-height: 90vh !important;
     overflow-y: auto !important;
+  }
+
+  /* Detail panel: full screen on mobile */
+  .detail-panel {
+    max-width: 100% !important;
+  }
+
+  /* Detail dialog: full screen + single column on mobile */
+  .modal-backdrop:has(.detail-dialog) {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+  .detail-dialog {
+    height: 95vh !important;
+    border-radius: 12px 12px 0 0 !important;
+    max-width: 100% !important;
+  }
+  .detail-body {
+    flex-direction: column !important;
+  }
+  .detail-right {
+    width: 100% !important;
+    border-left: none !important;
+    border-top: 2px solid #F0EEE8 !important;
+    min-height: 260px;
+    max-height: 320px;
+  }
+  .detail-left {
+    min-height: 0;
   }
 
   /* Touch targets */

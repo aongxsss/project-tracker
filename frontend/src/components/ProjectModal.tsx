@@ -27,6 +27,7 @@ const EMPTY = (
   assignee: "",
   priority: priorities[0]?.name ?? "",
   comment: "",
+  description: "",
 })
 
 export function ProjectModal({ project, brands, statuses, clientStatuses, assignees, priorities, onSave, onClose }: Props) {
@@ -43,6 +44,7 @@ export function ProjectModal({ project, brands, statuses, clientStatuses, assign
           assignee: project.assignee,
           priority: project.priority,
           comment: project.comment,
+          description: project.description,
         }
       : EMPTY(brands, statuses, priorities)
   )

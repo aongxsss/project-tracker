@@ -12,6 +12,24 @@ export interface Project {
   assignee: string
   priority: string
   comment: string
+  description: string
+  created_at: string
+}
+
+export interface Thread {
+  id: string
+  project_id: string
+  display_name: string
+  message: string
+  created_at: string
+}
+
+export interface Attachment {
+  id: string
+  project_id: string
+  original_name: string
+  content_type: string
+  file_size: number
   created_at: string
 }
 

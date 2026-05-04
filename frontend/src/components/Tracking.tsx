@@ -3,6 +3,7 @@ import { Project, ProjectInput, ConfigItem } from "../types"
 import { BrandBadge } from "./BrandBadge"
 import { StatusBadge } from "./StatusBadge"
 import { ProjectModal } from "./ProjectModal"
+import { ProjectDetail } from "./ProjectDetail"
 
 type SortKey = "due_date" | "brand" | "priority" | "start_date"
 type SortDir = "asc" | "desc"
@@ -52,7 +53,10 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: "due_date", dir: "asc" })
   const [modalOpen, setModalOpen] = useState(false)
   const [editProject, setEditProject] = useState<Project | null>(null)
+  const [viewProjectId, setViewProjectId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+
+  const viewProject = viewProjectId ? projects.find((p) => p.id === viewProjectId) ?? null : null
 
   const bc = (name: string) => brands.find((b) => b.name === name)?.color ?? "#888888"
   const sc = (name: string) => statuses.find((s) => s.name === name)?.color ?? "#888888"
@@ -187,7 +191,7 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
                 {filtered.map((p) => {
                   const overdue = isOverdue(p.due_date, p.internal_status)
                   return (
-                    <tr key={p.id} className="table-row" style={{ borderBottom: "1px solid #F0EEE8" }}>
+                    <tr key={p.id} className="table-row" onClick={() => setViewProjectId(p.id)} style={{ borderBottom: "1px solid #F0EEE8", cursor: "pointer" }}>
                       <td style={{ padding: "11px 14px", color: "#666", whiteSpace: "nowrap" }}>{formatDate(p.start_date)}</td>
                       <td style={{ padding: "11px 14px", whiteSpace: "nowrap" }}>
                         <div style={{ color: overdue ? "#C0392B" : "#333", fontWeight: overdue ? 500 : 400 }}>{formatDate(p.due_date)}</div>
@@ -210,7 +214,7 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
                       <td className="comment-col" style={{ padding: "11px 14px", color: "#999", maxWidth: 160 }}>
                         <span title={p.comment || undefined} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.comment || "—"}</span>
                       </td>
-                      <td style={{ padding: "11px 14px" }}>
+                      <td onClick={(e) => e.stopPropagation()} style={{ padding: "11px 14px" }}>
                         {confirmDeleteId === p.id ? (
                           <div style={{ display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
                             <span style={{ fontSize: 12, color: "#555" }}>Sure?</span>
@@ -247,7 +251,14 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
                     {p.priority && <StatusBadge status={p.priority} color={pc(p.priority)} />}
                     {p.client_status && <StatusBadge status={p.client_status} color={csc(p.client_status)} />}
                   </div>
-                  <div style={{ fontWeight: 500, fontSize: 14, color: "#1A1A1A", marginBottom: 2 }}>{p.name}</div>
+                  <button
+                    type="button"
+                    className="project-link"
+                    onClick={() => setViewProjectId(p.id)}
+                    style={{ fontWeight: 500, fontSize: 14, color: "#1A1A1A", marginBottom: 2, whiteSpace: "normal" }}
+                  >
+                    {p.name}
+                  </button>
                   <div style={{ fontSize: 12, color: "#777", marginBottom: 4 }}>{p.customer_name}</div>
                   <div style={{ fontSize: 12, color: "#999", marginBottom: 12 }}>
                     {p.start_date ? <span>Start: {formatDate(p.start_date)} · </span> : null}
@@ -269,6 +280,20 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
             })}
           </div>
         </>
+      )}
+
+      {viewProject && !modalOpen && (
+        <ProjectDetail
+          project={viewProject}
+          brands={brands}
+          statuses={statuses}
+          clientStatuses={clientStatuses}
+          priorities={priorities}
+          onEdit={() => { setEditProject(viewProject); setModalOpen(true) }}
+          onDelete={async () => { await onDelete(viewProject.id); setViewProjectId(null) }}
+          onUpdate={onUpdate}
+          onClose={() => setViewProjectId(null)}
+        />
       )}
 
       {modalOpen && (
