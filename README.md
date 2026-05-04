@@ -1,15 +1,19 @@
 # Project Tracker
 
-A project tracking web app for AE teams — manage tasks across brands, track deadlines, and visualise workload in one place.
+A project tracking web app for AE teams — manage projects across brands, track deadlines, collaborate via threads, and visualise workload in one place.
 
 ## Features
 
-- **Task tracking** — create, edit, and delete tasks with brand, status, AE, and due date
-- **Brand & status management** — add custom brands and statuses with colour coding
-- **Overview dashboard** — stat cards, status distribution, brand workload, AE workload, and a task calendar
-- **Insight charts** — 6 charts including created vs completed trend, aging tasks, workload per AE, and completion rate per brand
-- **Notes canvas** — sticky notes with interactive checkboxes, auto-saved per user
-- **Per-user data** — each account has its own isolated tasks, brands, and statuses
+- **Project tracking** — create, edit, and delete projects with brand, customer, assignee, priority, dual status (internal + client), and due date
+- **Project detail panel** — ClickUp-style side panel with full metadata, inline description editor, file attachments, and threaded chat per project
+- **Threads** — per-project chat with file attachments; images show inline preview, other files as download chips; files staged before send
+- **File attachments** — upload files (max 10 MB each) stored per project; embedded inline in description as download links
+- **Brand & status management** — custom brands, internal statuses, client statuses, assignees, and priorities with colour coding
+- **Overview dashboard** — stat cards, status distribution, brand workload, assignee workload, and a project calendar
+- **Insight charts** — created vs completed trend, aging tasks, workload per assignee, completion rate per brand, and more
+- **Notes canvas** — Google Keep-style sticky notes with rich text, pinning, and colour coding
+- **Spreadsheet** — per-user sheets with custom columns, inline editing, and CSV/Excel export
+- **Per-user data** — each account has isolated projects, config, notes, threads, and attachments
 - **Responsive** — works on desktop, tablet, and mobile
 
 ## Tech Stack
@@ -21,6 +25,7 @@ A project tracking web app for AE teams — manage tasks across brands, track de
 | Backend | FastAPI + asyncpg |
 | Database | PostgreSQL 16 |
 | Auth | JWT via httpOnly cookies |
+| File storage | PostgreSQL BYTEA (max 10 MB per file) |
 | Dev environment | Docker Compose |
 
 ## Getting Started (Local with Docker)
@@ -42,7 +47,7 @@ cd project-tracker
 cp .env.example .env.local
 ```
 
-The default values in `.env.example` work out of the box for local development — no changes needed.
+The default values in `.env.example` work out of the box for local development.
 
 ### 3. Start all services
 
@@ -58,20 +63,17 @@ docker compose up --build
 
 ### 4. Register an account
 
-Open http://localhost:5173 and create an account. Each account gets its own isolated workspace with default brands and statuses pre-loaded.
+Open http://localhost:5173 and create an account. Each account gets its own isolated workspace with default brands, statuses, and priorities pre-loaded.
 
 ## Deployment
 
-This project is split across two platforms:
-
-- **Frontend → [Vercel](https://vercel.com)**
-- **Backend + Database → [Railway](https://railway.app)**
+Frontend → [Vercel](https://vercel.com) · Backend + Database → [Railway](https://railway.app)
 
 ### Backend (Railway)
 
 1. Create a new project on Railway
 2. Add a **PostgreSQL** database service
-3. Deploy the backend from this repo with **Root Directory** set to `backend`
+3. Deploy from this repo with **Root Directory** set to `backend`
 4. Set environment variables:
 
 ```
@@ -96,23 +98,44 @@ VITE_API_URL=https://your-backend.up.railway.app
 project-tracker/
 ├── backend/
 │   ├── app/
-│   │   ├── routers/        # auth, projects, config
-│   │   ├── auth.py         # JWT + bcrypt
-│   │   ├── database.py     # asyncpg + auto-migration
+│   │   ├── routers/
+│   │   │   ├── auth.py
+│   │   │   ├── projects.py
+│   │   │   ├── threads.py       # per-project chat
+│   │   │   ├── attachments.py   # file upload/download (BYTEA)
+│   │   │   ├── notes.py
+│   │   │   ├── sheets.py
+│   │   │   └── config.py        # brands, statuses, assignees, priorities
+│   │   ├── auth.py              # JWT + bcrypt
+│   │   ├── database.py          # asyncpg + auto-migration
+│   │   ├── models.py
 │   │   └── main.py
 │   ├── Dockerfile
 │   ├── Dockerfile.prod
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── components/     # Overview, Tracking, Sidebar, etc.
-│   │   ├── hooks/          # useAuth, useProjects, useConfig
+│   │   ├── components/
+│   │   │   ├── ProjectDetail.tsx  # ClickUp-style detail panel
+│   │   │   ├── ProjectModal.tsx   # add/edit form
+│   │   │   ├── Tracking.tsx       # project table + mobile cards
+│   │   │   ├── Overview.tsx
+│   │   │   ├── Notes.tsx
+│   │   │   ├── Sheet.tsx
+│   │   │   ├── InsightCharts.tsx
+│   │   │   └── Sidebar.tsx
+│   │   ├── hooks/
+│   │   │   ├── useProjects.ts
+│   │   │   ├── useProjectThreads.ts
+│   │   │   ├── useProjectAttachments.ts
+│   │   │   ├── useNotes.ts
+│   │   │   ├── useSheets.ts
+│   │   │   ├── useConfig.ts
+│   │   │   └── useAuth.ts
 │   │   └── types.ts
 │   ├── Dockerfile
 │   ├── Dockerfile.prod
 │   └── vite.config.ts
-├── db/
-│   └── init.sql
 ├── docker-compose.yml
 ├── docker-compose.prod.yml
 └── .env.example
@@ -123,6 +146,6 @@ project-tracker/
 | Variable | Description | Example |
 |---|---|---|
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
-| `SECRET_KEY` | JWT signing secret (keep this private) | `change-me-to-a-long-random-string` |
+| `SECRET_KEY` | JWT signing secret | `change-me-to-a-long-random-string` |
 | `ALLOWED_ORIGINS` | Comma-separated allowed CORS origins | `https://your-app.vercel.app` |
 | `VITE_API_URL` | Backend API base URL (frontend only) | `https://your-backend.up.railway.app` |
