@@ -34,8 +34,8 @@ function daysLabel(due: string, status: string): { text: string; color: string }
   if (status === "Done") return null
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const diff = Math.round((new Date(due + "T00:00:00").getTime() - today.getTime()) / 86400000)
-  if (diff === 0) return { text: "Due today", color: "#C07D15" }
-  if (diff > 0) return { text: `Due in ${diff}d`, color: diff <= 3 ? "#C07D15" : "#888" }
+  if (diff === 0) return { text: "Final today", color: "#C07D15" }
+  if (diff > 0) return { text: `Final in ${diff}d`, color: diff <= 3 ? "#C07D15" : "#888" }
   return { text: `${Math.abs(diff)}d overdue`, color: "#C0392B" }
 }
 

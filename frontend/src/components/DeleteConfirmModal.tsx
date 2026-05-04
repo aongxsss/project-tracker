@@ -92,7 +92,7 @@ export function DeleteConfirmModal({ itemName, description, affectedProjects = [
                   <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.statusColor, flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
-                    <div style={{ fontSize: 11, color: "#999", marginTop: 1 }}>{p.customer_name} · Due {formatDate(p.due_date)}</div>
+                    <div style={{ fontSize: 11, color: "#999", marginTop: 1 }}>{p.customer_name} · Final {formatDate(p.due_date)}</div>
                   </div>
                   <span style={{ fontSize: 11, color: "#888", background: "#EFEFEF", borderRadius: 999, padding: "2px 8px", whiteSpace: "nowrap", flexShrink: 0 }}>{p.internal_status}</span>
                 </div>

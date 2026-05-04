@@ -10,6 +10,10 @@ function formatDate(d: string) {
   return new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
 }
 
+function formatDateTime(d: string) {
+  return new Date(d).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+}
+
 function daysLabel(due: string, status: string): { text: string; color: string } | null {
   if (status === "Done") return null
   const today = new Date()
@@ -69,7 +73,7 @@ export function Overview({ projects, allProjects, brands, statuses, clientStatus
   })()
 
   const recent = [...projects]
-    .sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime())
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 6)
 
   if (total === 0 && allProjects.length === 0) {
@@ -142,8 +146,11 @@ export function Overview({ projects, allProjects, brands, statuses, clientStatus
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
                     <div style={{ fontSize: 12, color: "#999", marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
-                      <BrandBadge brand={p.brand} color={bc(p.brand)} /> · {p.customer_name} · Due {formatDate(p.due_date)}
-                      {(() => { const l = daysLabel(p.due_date, p.internal_status); return l ? <span style={{ color: l.color, marginLeft: 2 }}>· {l.text}</span> : null })()}
+                      <BrandBadge brand={p.brand} color={bc(p.brand)} /> · {p.customer_name}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#bbb", marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+                      Added {formatDateTime(p.created_at)} · Final {formatDate(p.due_date)}
+                      {(() => { const l = daysLabel(p.due_date, p.internal_status); return l ? <span style={{ color: l.color }}>· {l.text}</span> : null })()}
                     </div>
                   </div>
                 </div>

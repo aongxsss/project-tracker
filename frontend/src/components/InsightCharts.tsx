@@ -252,9 +252,9 @@ export function InsightCharts({ projects, brands }: Props) {
         </div>
       </div>
 
-      {/* Row 3: Tasks by Due Month — full width, Open vs Done */}
+      {/* Row 3: Tasks by Final Month — full width, Open vs Done */}
       <div style={CARD}>
-        <h2 style={T}>Tasks by Due Month</h2>
+        <h2 style={T}>Tasks by Final Month</h2>
         <span style={SUB}>Open vs completed tasks per month.</span>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={dueData} barSize={28} barGap={4}>

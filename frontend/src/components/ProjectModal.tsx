@@ -79,6 +79,7 @@ export function ProjectModal({ project, brands, statuses, clientStatuses, assign
     const e: Partial<Record<keyof ProjectInput, string>> = {}
     if (!form.customer_name.trim()) e.customer_name = "Customer name is required"
     if (!form.name.trim()) e.name = "Project name is required"
+    if (!form.start_date) e.start_date = "Start date is required"
     if (!form.due_date) e.due_date = "Final date is required"
     if (!form.brand) e.brand = "Brand is required"
     if (!form.internal_status) e.internal_status = "Internal status is required"
@@ -243,9 +244,9 @@ export function ProjectModal({ project, brands, statuses, clientStatuses, assign
                 type="date"
                 value={form.start_date ?? ""}
                 onChange={(e) => setForm({ ...form, start_date: e.target.value || null })}
-                style={{ ...inputStyle }}
+                style={{ ...inputStyle, borderColor: err("start_date") }}
               />
-            ))}
+            ), "start_date")}
             {field("Final Date", (
               <input
                 type="date"
