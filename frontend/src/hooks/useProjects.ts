@@ -4,6 +4,11 @@ import { Project, ProjectInput } from "../types"
 const API = import.meta.env.VITE_API_URL
 const CREDS: RequestInit = { credentials: "include" }
 
+async function errDetail(res: Response, fallback: string): Promise<never> {
+  const body = await res.json().catch(() => ({})) as { detail?: string }
+  throw new Error(body.detail || fallback)
+}
+
 export function useProjects(enabled = true) {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,7 +41,7 @@ export function useProjects(enabled = true) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
-    if (!res.ok) throw new Error((await res.json()).detail || "Failed to create project")
+    if (!res.ok) await errDetail(res, "Failed to create project")
     const created: Project = await res.json()
     setProjects((prev) => [created, ...prev])
   }
@@ -48,14 +53,14 @@ export function useProjects(enabled = true) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
-    if (!res.ok) throw new Error((await res.json()).detail || "Failed to update project")
+    if (!res.ok) await errDetail(res, "Failed to update project")
     const updated: Project = await res.json()
     setProjects((prev) => prev.map((p) => (p.id === id ? updated : p)))
   }
 
   const deleteProject = async (id: string): Promise<void> => {
     const res = await fetch(`${API}/api/projects/${id}`, { ...CREDS, method: "DELETE" })
-    if (!res.ok) throw new Error((await res.json()).detail || "Failed to delete project")
+    if (!res.ok) await errDetail(res, "Failed to delete project")
     setProjects((prev) => prev.filter((p) => p.id !== id))
   }
 

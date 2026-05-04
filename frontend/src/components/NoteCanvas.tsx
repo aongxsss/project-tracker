@@ -27,7 +27,7 @@ interface Props {
 
 export function NoteCanvas({ initialValue, onSave }: Props) {
   const [items, setItems] = useState<NoteItem[]>(() => parse(initialValue))
-  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle")
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastSaved = useRef(initialValue)
 
@@ -44,7 +44,8 @@ export function NoteCanvas({ initialValue, onSave }: Props) {
         setStatus("saved")
         setTimeout(() => setStatus("idle"), 2000)
       } catch {
-        setStatus("idle")
+        setStatus("error")
+        setTimeout(() => setStatus("idle"), 3000)
       }
     }, 800)
   }, [onSave])
@@ -117,8 +118,8 @@ export function NoteCanvas({ initialValue, onSave }: Props) {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <h2 style={{ fontSize: 15, fontWeight: 500, margin: 0, color: "#1A1A1A" }}>📝 Notes</h2>
-        <span style={{ fontSize: 11, color: status === "saving" ? "#C07D15" : status === "saved" ? "#1D9E75" : "transparent", transition: "color 0.3s" }}>
-          {status === "saving" ? "Saving…" : "✓ Saved"}
+        <span style={{ fontSize: 11, color: status === "saving" ? "#C07D15" : status === "saved" ? "#1D9E75" : status === "error" ? "#C0392B" : "transparent", transition: "color 0.3s" }}>
+          {status === "saving" ? "Saving…" : status === "error" ? "✗ Failed to save" : "✓ Saved"}
         </span>
       </div>
 

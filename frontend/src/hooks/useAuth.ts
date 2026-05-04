@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback } from "react"
 
 const API = import.meta.env.VITE_API_URL
 
+async function errDetail(res: Response, fallback = "Request failed"): Promise<never> {
+  const body = await res.json().catch(() => ({})) as { detail?: string }
+  throw new Error(body.detail || fallback)
+}
+
 export interface AuthUser {
   id: string
   username: string
@@ -31,7 +36,7 @@ export function useAuth() {
       method: "POST", headers: { "Content-Type": "application/json" },
       credentials: "include", body: JSON.stringify({ username, password }),
     })
-    if (!res.ok) throw new Error((await res.json()).detail)
+    if (!res.ok) await errDetail(res)
     const full: AuthUser = await res.json()
     setUser(full)
   }
@@ -41,7 +46,7 @@ export function useAuth() {
       method: "POST", headers: { "Content-Type": "application/json" },
       credentials: "include", body: JSON.stringify({ username, display_name, password }),
     })
-    if (!res.ok) throw new Error((await res.json()).detail)
+    if (!res.ok) await errDetail(res)
     const data: AuthUser = await res.json()
     setUser(data)
   }
