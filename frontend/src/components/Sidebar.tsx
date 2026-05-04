@@ -139,7 +139,6 @@ export function Sidebar({
             <img src="/favicon.svg" alt="" width={36} height={36} style={{ flexShrink: 0 }} />
             <span style={{ fontWeight: 700, fontSize: 18, color: "#1A1A1A" }}>Project Tracker</span>
           </div>
-          <div style={{ fontSize: 12, color: "#999", marginTop: 4, paddingLeft: 44 }} className="sidebar-label">AE Team</div>
           <div className="sidebar-icon-only" style={{ display: "none" }}>
             <img src="/favicon.svg" alt="Project Tracker" width={36} height={36} />
           </div>

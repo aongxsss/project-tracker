@@ -6,8 +6,6 @@ import { InsightCharts } from "./InsightCharts"
 import { NoteCanvas } from "./NoteCanvas"
 import { ProjectCalendar } from "./ProjectCalendar"
 
-const AVATAR_PALETTE = ["#7F77DD", "#1D9E75", "#D85A30", "#2B7FD4", "#C07D15", "#8E44AD", "#E67E22", "#16A085"]
-
 function hexBg(hex: string): string {
   try {
     const r = parseInt(hex.slice(1, 3), 16)
@@ -59,11 +57,6 @@ export function Overview({ projects, allProjects, brands, statuses, notes, onSav
   const brandCounts = brands.map((b) => ({ brand: b, count: projects.filter((p) => p.brand === b.name).length }))
   const maxBrand = Math.max(...brandCounts.map((b) => b.count), 1)
 
-  const pmMap = new Map<string, number>()
-  projects.forEach((p) => pmMap.set(p.pm, (pmMap.get(p.pm) || 0) + 1))
-  const allPms = Array.from(pmMap.entries()).sort((a, b) => b[1] - a[1])
-  const uniquePmNames = Array.from(new Set(allProjects.map((p) => p.pm))).sort()
-  const pmColorMap = new Map(uniquePmNames.map((pm, i) => [pm, AVATAR_PALETTE[i % AVATAR_PALETTE.length]]))
 
   const recent = [...projects].sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime()).slice(0, 5)
 
@@ -103,18 +96,42 @@ export function Overview({ projects, allProjects, brands, statuses, notes, onSav
         </StatCard>
       </div>
 
-      {/* Main columns: Left = Brand Workload + Notes | Right = Recent Activity + AE Workload + Status Distribution */}
+      {/* Main columns: Left = Notes + Calendar | Right = Recent Activity + Brand Workload + Status Distribution */}
       <div className="overview-columns" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "start" }}>
 
         {/* Left */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {/* Note Canvas — top */}
           <NoteCanvas initialValue={notes} onSave={onSaveNotes} />
-
-          {/* Project Calendar — below Notes */}
           <ProjectCalendar projects={projects} brands={brands} statuses={statuses} compact />
+        </div>
 
-          {/* Brand Workload — full width */}
+        {/* Right: Recent Activity → Brand Workload → Status Distribution */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+          {/* 1. Recent Activity */}
+          <div style={{ background: "#fff", border: "1px solid #E8E6E0", borderRadius: 12, padding: "20px 24px" }}>
+            <h2 className="section-title" style={{ fontSize: 15, fontWeight: 500, margin: "0 0 16px", color: "#1A1A1A" }}>Recent Activity</h2>
+            {recent.length === 0 ? (
+              <div style={{ fontSize: 13, color: "#999" }}>No tasks yet</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {recent.map((p) => (
+                  <div key={p.id} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: sc(p.status), flexShrink: 0, marginTop: 4 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+                      <div style={{ fontSize: 12, color: "#999", marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+                        <BrandBadge brand={p.brand} color={bc(p.brand)} /> · {p.pm} · Due {formatDate(p.due_date)}
+                        {(() => { const l = daysLabel(p.due_date, p.status); return l ? <span style={{ color: l.color, marginLeft: 2 }}>· {l.text}</span> : null })()}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 2. Brand Workload */}
           <div style={{ background: "#fff", border: "1px solid #E8E6E0", borderRadius: 12, padding: "20px 24px" }}>
             <h2 className="section-title" style={{ fontSize: 15, fontWeight: 500, margin: "0 0 16px", color: "#1A1A1A" }}>Brand Workload</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -129,12 +146,8 @@ export function Overview({ projects, allProjects, brands, statuses, notes, onSav
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Right: Status Distribution → Recent Activity → AE Workload */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-
-          {/* 1. Status Distribution */}
+          {/* 3. Status Distribution */}
           {(() => {
             const pieData = statuses.map((s) => ({
               name: s.name,
@@ -172,55 +185,6 @@ export function Overview({ projects, allProjects, brands, statuses, notes, onSav
               </div>
             )
           })()}
-
-          {/* 2. Recent Activity */}
-          <div style={{ background: "#fff", border: "1px solid #E8E6E0", borderRadius: 12, padding: "20px 24px" }}>
-            <h2 className="section-title" style={{ fontSize: 15, fontWeight: 500, margin: "0 0 16px", color: "#1A1A1A" }}>Recent Activity</h2>
-            {recent.length === 0 ? (
-              <div style={{ fontSize: 13, color: "#999" }}>No tasks yet</div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {recent.map((p) => (
-                  <div key={p.id} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: sc(p.status), flexShrink: 0, marginTop: 4 }} />
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
-                      <div style={{ fontSize: 12, color: "#999", marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
-                        <BrandBadge brand={p.brand} color={bc(p.brand)} /> · {p.pm} · Due {formatDate(p.due_date)}
-                        {(() => { const l = daysLabel(p.due_date, p.status); return l ? <span style={{ color: l.color, marginLeft: 2 }}>· {l.text}</span> : null })()}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* 3. AE Workload — bottom right */}
-          <div style={{ background: "#fff", border: "1px solid #E8E6E0", borderRadius: 12, padding: "20px 24px" }}>
-            <h2 className="section-title" style={{ fontSize: 15, fontWeight: 500, margin: "0 0 16px", color: "#1A1A1A" }}>AE Workload</h2>
-            {allPms.length === 0 ? (
-              <div style={{ fontSize: 13, color: "#999" }}>No AEs yet</div>
-            ) : (() => {
-              const maxPm = Math.max(...allPms.map(([, c]) => c), 1)
-              return (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {allPms.map(([pm, count]) => {
-                    const color = pmColorMap.get(pm) ?? "#888"
-                    return (
-                      <div key={pm} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <span style={{ width: 56, fontSize: 12, fontWeight: 500, color, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pm}</span>
-                        <div style={{ flex: 1, height: 8, background: color + "22", borderRadius: 999, overflow: "hidden" }}>
-                          <div style={{ height: "100%", width: `${(count / maxPm) * 100}%`, background: color, borderRadius: 999, transition: "width 0.4s" }} />
-                        </div>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: "#555", minWidth: 20, textAlign: "right" }}>{count}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              )
-            })()}
-          </div>
 
         </div>
       </div>
