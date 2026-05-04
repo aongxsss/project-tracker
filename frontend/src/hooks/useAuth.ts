@@ -32,9 +32,7 @@ export function useAuth() {
       credentials: "include", body: JSON.stringify({ username, password }),
     })
     if (!res.ok) throw new Error((await res.json()).detail)
-    const me = await fetch(`${API}/api/auth/me`, { credentials: "include" })
-    if (!me.ok) throw new Error("Login succeeded but session could not be established")
-    const full: AuthUser = await me.json()
+    const full: AuthUser = await res.json()
     setUser(full)
   }
 
