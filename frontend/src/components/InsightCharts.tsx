@@ -27,7 +27,7 @@ function dueByMonth(projects: Project[], months: ReturnType<typeof last6Months>,
   return months.map(({ key, label }) => {
     const row: Record<string, string | number> = { label }
     statuses.forEach((s) => {
-      row[s.name] = projects.filter((p) => p.due_date.slice(0, 7) === key && p.status === s.name).length
+      row[s.name] = projects.filter((p) => p.due_date.slice(0, 7) === key && p.internal_status === s.name).length
     })
     return row
   })
@@ -37,12 +37,12 @@ function createdVsDone(projects: Project[], months: ReturnType<typeof last6Month
   return months.map(({ key, label }) => ({
     label,
     Created: projects.filter((p) => p.created_at.slice(0, 7) === key).length,
-    Completed: projects.filter((p) => p.created_at.slice(0, 7) === key && p.status === "Done").length,
+    Completed: projects.filter((p) => p.created_at.slice(0, 7) === key && p.internal_status === "Done").length,
   }))
 }
 
 function agingBuckets(projects: Project[]) {
-  const open = projects.filter((p) => p.status !== "Done")
+  const open = projects.filter((p) => p.internal_status !== "Done")
   const today = Date.now()
   return [
     { name: "0–3d", min: 0, max: 3, color: "#1D9E75" },
@@ -61,10 +61,10 @@ function agingBuckets(projects: Project[]) {
 }
 
 function aeByStatus(projects: Project[], statuses: ConfigItem[]) {
-  const aes = [...new Set(projects.map((p) => p.pm))].sort()
+  const aes = [...new Set(projects.map((p) => p.customer_name))].sort()
   return aes.map((ae) => {
     const row: Record<string, string | number> = { name: ae.split(" ")[0] }
-    statuses.forEach((s) => { row[s.name] = projects.filter((p) => p.pm === ae && p.status === s.name).length })
+    statuses.forEach((s) => { row[s.name] = projects.filter((p) => p.customer_name === ae && p.internal_status === s.name).length })
     return row
   })
 }
@@ -72,10 +72,10 @@ function aeByStatus(projects: Project[], statuses: ConfigItem[]) {
 function aeWorkloadVsOutput(projects: Project[]) {
   const map = new Map<string, { name: string; Total: number; Completed: number }>()
   projects.forEach((p) => {
-    if (!map.has(p.pm)) map.set(p.pm, { name: p.pm.split(" ")[0], Total: 0, Completed: 0 })
-    const r = map.get(p.pm)!
+    if (!map.has(p.customer_name)) map.set(p.customer_name, { name: p.customer_name.split(" ")[0], Total: 0, Completed: 0 })
+    const r = map.get(p.customer_name)!
     r.Total++
-    if (p.status === "Done") r.Completed++
+    if (p.internal_status === "Done") r.Completed++
   })
   return [...map.values()].sort((a, b) => b.Total - a.Total)
 }
@@ -84,7 +84,7 @@ function brandCompletion(projects: Project[], brands: ConfigItem[]) {
   return brands
     .map((b) => {
       const total = projects.filter((p) => p.brand === b.name).length
-      const done = projects.filter((p) => p.brand === b.name && p.status === "Done").length
+      const done = projects.filter((p) => p.brand === b.name && p.internal_status === "Done").length
       return { name: b.name, Rate: total > 0 ? Math.round((done / total) * 100) : 0, color: b.color, total }
     })
     .filter((d) => d.total > 0)

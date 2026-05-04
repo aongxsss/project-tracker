@@ -8,6 +8,16 @@ const PALETTE = [
   "#16A085", "#E91E63", "#607D8B", "#795548",
 ]
 
+type TabKey = "brands" | "internal-status" | "client-status" | "assignees" | "priorities"
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "brands", label: "Brands" },
+  { key: "internal-status", label: "Internal Status" },
+  { key: "client-status", label: "Client Status" },
+  { key: "assignees", label: "Assignees" },
+  { key: "priorities", label: "Priorities" },
+]
+
 interface SectionProps {
   title: string
   items: ConfigItem[]
@@ -22,36 +32,23 @@ interface SectionProps {
   deletingName: string | null
 }
 
-function Section({
-  title, items,
-  name, onNameChange,
-  color, onColorChange,
-  onAdd, onDelete, onUpdateColor,
-  addBusy, deletingName,
-}: SectionProps) {
+function Section({ title, items, name, onNameChange, color, onColorChange, onAdd, onDelete, onUpdateColor, addBusy, deletingName }: SectionProps) {
   const [editingColor, setEditingColor] = useState<string | null>(null)
   const [savingColor, setSavingColor] = useState(false)
 
   const handleColorPick = async (itemName: string, newColor: string) => {
     setSavingColor(true)
-    try {
-      await onUpdateColor(itemName, newColor)
-    } finally {
-      setSavingColor(false)
-      setEditingColor(null)
-    }
+    try { await onUpdateColor(itemName, newColor) }
+    finally { setSavingColor(false); setEditingColor(null) }
   }
 
   return (
     <div>
-      <h3 style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", margin: "0 0 10px" }}>{title}</h3>
-
       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
         {items.length === 0 && <div style={{ fontSize: 13, color: "#aaa" }}>None yet</div>}
         {items.map((item) => (
           <div key={item.name}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", background: "#F9F8F5", borderRadius: editingColor === item.name ? "8px 8px 0 0" : 8 }}>
-              {/* Clickable color dot */}
               <button
                 onClick={() => setEditingColor(editingColor === item.name ? null : item.name)}
                 title="Change color"
@@ -63,35 +60,19 @@ function Section({
                 disabled={deletingName === item.name}
                 title="Delete"
                 style={{ background: "none", border: "none", cursor: "pointer", color: "#C0392B", fontSize: 18, padding: "2px 6px", lineHeight: 1, borderRadius: 6, minHeight: 30, minWidth: 30 }}
-              >
-                ×
-              </button>
+              >×</button>
             </div>
-
-            {/* Inline color picker */}
             {editingColor === item.name && (
               <div style={{ background: "#F0EFF9", border: "1px solid #E0DFF5", borderTop: "none", borderRadius: "0 0 8px 8px", padding: "10px 12px", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                 {PALETTE.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => handleColorPick(item.name, c)}
-                    disabled={savingColor}
+                  <button key={c} onClick={() => handleColorPick(item.name, c)} disabled={savingColor}
                     style={{ width: 22, height: 22, borderRadius: "50%", background: c, border: item.color === c ? "2.5px solid #1A1A1A" : "2.5px solid transparent", cursor: savingColor ? "not-allowed" : "pointer", padding: 0, minHeight: 22, minWidth: 22, outline: "none" }}
                   />
                 ))}
-                <input
-                  type="color"
-                  defaultValue={item.color}
-                  onChange={(e) => handleColorPick(item.name, e.target.value)}
-                  title="Custom color"
+                <input type="color" defaultValue={item.color} onChange={(e) => handleColorPick(item.name, e.target.value)}
                   style={{ width: 22, height: 22, padding: 0, border: "none", borderRadius: "50%", cursor: "pointer", background: "none", minHeight: 22, minWidth: 22 }}
                 />
-                <button
-                  onClick={() => setEditingColor(null)}
-                  style={{ marginLeft: "auto", fontSize: 11, color: "#888", background: "none", border: "none", cursor: "pointer", padding: "2px 6px" }}
-                >
-                  Cancel
-                </button>
+                <button onClick={() => setEditingColor(null)} style={{ marginLeft: "auto", fontSize: 11, color: "#888", background: "none", border: "none", cursor: "pointer", padding: "2px 6px" }}>Cancel</button>
               </div>
             )}
           </div>
@@ -106,66 +87,19 @@ function Section({
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") onAdd() }}
-            style={{
-              flex: 1,
-              padding: "7px 10px",
-              border: "1px solid #E8E6E0",
-              borderRadius: 8,
-              fontSize: 13,
-              fontFamily: "inherit",
-              outline: "none",
-              minWidth: 120,
-              minHeight: 36,
-              boxSizing: "border-box",
-            }}
+            style={{ flex: 1, padding: "7px 10px", border: "1px solid #E8E6E0", borderRadius: 8, fontSize: 13, fontFamily: "inherit", outline: "none", minWidth: 120, minHeight: 36, boxSizing: "border-box" }}
           />
-          <button
-            onClick={onAdd}
-            disabled={!name.trim() || addBusy}
-            style={{
-              padding: "7px 14px",
-              background: !name.trim() ? "#C5C3F0" : "#7F77DD",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              cursor: !name.trim() ? "not-allowed" : "pointer",
-              fontSize: 13,
-              fontFamily: "inherit",
-              fontWeight: 500,
-              whiteSpace: "nowrap",
-              minHeight: 36,
-            }}
-          >
-            {addBusy ? "…" : "Add"}
-          </button>
+          <button onClick={onAdd} disabled={!name.trim() || addBusy}
+            style={{ padding: "7px 14px", background: !name.trim() ? "#C5C3F0" : "#7F77DD", color: "#fff", border: "none", borderRadius: 8, cursor: !name.trim() ? "not-allowed" : "pointer", fontSize: 13, fontFamily: "inherit", fontWeight: 500, whiteSpace: "nowrap", minHeight: 36 }}
+          >{addBusy ? "…" : "Add"}</button>
         </div>
-
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {PALETTE.map((c) => (
-            <button
-              key={c}
-              onClick={() => onColorChange(c)}
-              title={c}
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: "50%",
-                background: c,
-                border: color === c ? "2.5px solid #1A1A1A" : "2.5px solid transparent",
-                cursor: "pointer",
-                padding: 0,
-                flexShrink: 0,
-                minHeight: 22,
-                minWidth: 22,
-                outline: "none",
-              }}
+            <button key={c} onClick={() => onColorChange(c)} title={c}
+              style={{ width: 22, height: 22, borderRadius: "50%", background: c, border: color === c ? "2.5px solid #1A1A1A" : "2.5px solid transparent", cursor: "pointer", padding: 0, flexShrink: 0, minHeight: 22, minWidth: 22, outline: "none" }}
             />
           ))}
-          <input
-            type="color"
-            value={color}
-            onChange={(e) => onColorChange(e.target.value)}
-            title="Custom color"
+          <input type="color" value={color} onChange={(e) => onColorChange(e.target.value)}
             style={{ width: 22, height: 22, padding: 0, border: "none", borderRadius: "50%", cursor: "pointer", background: "none", minHeight: 22, minWidth: 22 }}
           />
         </div>
@@ -177,6 +111,9 @@ function Section({
 interface Props {
   brands: ConfigItem[]
   statuses: ConfigItem[]
+  clientStatuses: ConfigItem[]
+  assignees: ConfigItem[]
+  priorities: ConfigItem[]
   projects: Project[]
   onAddBrand: (name: string, color: string) => Promise<void>
   onUpdateBrand: (name: string, color: string) => Promise<void>
@@ -184,24 +121,47 @@ interface Props {
   onAddStatus: (name: string, color: string) => Promise<void>
   onUpdateStatus: (name: string, color: string) => Promise<void>
   onDeleteStatus: (name: string) => Promise<void>
+  onAddClientStatus: (name: string, color: string) => Promise<void>
+  onUpdateClientStatus: (name: string, color: string) => Promise<void>
+  onDeleteClientStatus: (name: string) => Promise<void>
+  onAddAssignee: (name: string, color: string) => Promise<void>
+  onUpdateAssignee: (name: string, color: string) => Promise<void>
+  onDeleteAssignee: (name: string) => Promise<void>
+  onAddPriority: (name: string, color: string) => Promise<void>
+  onUpdatePriority: (name: string, color: string) => Promise<void>
+  onDeletePriority: (name: string) => Promise<void>
   onClose: () => void
 }
 
 export function ManageModal({
-  brands, statuses, projects,
+  brands, statuses, clientStatuses, assignees, priorities, projects,
   onAddBrand, onUpdateBrand, onDeleteBrand,
   onAddStatus, onUpdateStatus, onDeleteStatus,
+  onAddClientStatus, onUpdateClientStatus, onDeleteClientStatus,
+  onAddAssignee, onUpdateAssignee, onDeleteAssignee,
+  onAddPriority, onUpdatePriority, onDeletePriority,
   onClose,
 }: Props) {
-  const [brandName, setBrandName] = useState("")
-  const [brandColor, setBrandColor] = useState(PALETTE[0])
-  const [statusName, setStatusName] = useState("")
-  const [statusColor, setStatusColor] = useState(PALETTE[3])
+  const [activeTab, setActiveTab] = useState<TabKey>("brands")
   const [error, setError] = useState<string | null>(null)
-  const [brandAddBusy, setBrandAddBusy] = useState(false)
-  const [statusAddBusy, setStatusAddBusy] = useState(false)
   const [brandToDelete, setBrandToDelete] = useState<string | null>(null)
+
+  const [brandName, setBrandName] = useState(""); const [brandColor, setBrandColor] = useState(PALETTE[0])
+  const [statusName, setStatusName] = useState(""); const [statusColor, setStatusColor] = useState(PALETTE[3])
+  const [clientStatusName, setClientStatusName] = useState(""); const [clientStatusColor, setClientStatusColor] = useState(PALETTE[1])
+  const [assigneeName, setAssigneeName] = useState(""); const [assigneeColor, setAssigneeColor] = useState(PALETTE[2])
+  const [priorityName, setPriorityName] = useState(""); const [priorityColor, setPriorityColor] = useState(PALETTE[5])
+
+  const [brandBusy, setBrandBusy] = useState(false)
+  const [statusBusy, setStatusBusy] = useState(false)
+  const [clientStatusBusy, setClientStatusBusy] = useState(false)
+  const [assigneeBusy, setAssigneeBusy] = useState(false)
+  const [priorityBusy, setPriorityBusy] = useState(false)
   const [deletingStatus, setDeletingStatus] = useState<string | null>(null)
+  const [deletingClientStatus, setDeletingClientStatus] = useState<string | null>(null)
+  const [deletingAssignee, setDeletingAssignee] = useState<string | null>(null)
+  const [deletingPriority, setDeletingPriority] = useState<string | null>(null)
+
   const backdropRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -210,55 +170,71 @@ export function ManageModal({
     return () => window.removeEventListener("keydown", fn)
   }, [onClose])
 
-  const handleAddBrand = async () => {
-    if (!brandName.trim()) return
-    setError(null)
-    setBrandAddBusy(true)
-    try {
-      await onAddBrand(brandName.trim(), brandColor)
-      setBrandName("")
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed")
-    } finally {
-      setBrandAddBusy(false)
-    }
-  }
-
-  const handleAddStatus = async () => {
-    if (!statusName.trim()) return
-    setError(null)
-    setStatusAddBusy(true)
-    try {
-      await onAddStatus(statusName.trim(), statusColor)
-      setStatusName("")
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed")
-    } finally {
-      setStatusAddBusy(false)
-    }
+  const wrap = async (fn: () => Promise<void>, setBusy: (b: boolean) => void) => {
+    setError(null); setBusy(true)
+    try { await fn() } catch (e) { setError(e instanceof Error ? e.message : "Failed") }
+    finally { setBusy(false) }
   }
 
   const handleDeleteBrand = async (name: string, force = false) => {
     setError(null)
-    try {
-      await onDeleteBrand(name, force)
-      setBrandToDelete(null)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed")
-      setBrandToDelete(null)
-    }
+    try { await onDeleteBrand(name, force); setBrandToDelete(null) }
+    catch (e) { setError(e instanceof Error ? e.message : "Failed"); setBrandToDelete(null) }
   }
 
-  const handleDeleteStatus = async (name: string) => {
-    setError(null)
-    setDeletingStatus(name)
-    try {
-      await onDeleteStatus(name)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed")
-    } finally {
-      setDeletingStatus(null)
-    }
+  const sc = (name: string) => statuses.find((s) => s.name === name)?.color ?? "#888888"
+
+  const tabContent: Record<TabKey, React.ReactNode> = {
+    "brands": (
+      <Section title="Brands" items={brands}
+        name={brandName} onNameChange={setBrandName}
+        color={brandColor} onColorChange={setBrandColor}
+        onAdd={() => wrap(async () => { await onAddBrand(brandName.trim(), brandColor); setBrandName("") }, setBrandBusy)}
+        onDelete={(name) => setBrandToDelete(name)}
+        onUpdateColor={onUpdateBrand}
+        addBusy={brandBusy} deletingName={null}
+      />
+    ),
+    "internal-status": (
+      <Section title="Internal Statuses" items={statuses}
+        name={statusName} onNameChange={setStatusName}
+        color={statusColor} onColorChange={setStatusColor}
+        onAdd={() => wrap(async () => { await onAddStatus(statusName.trim(), statusColor); setStatusName("") }, setStatusBusy)}
+        onDelete={async (name) => { setDeletingStatus(name); await wrap(() => onDeleteStatus(name), () => {}); setDeletingStatus(null) }}
+        onUpdateColor={onUpdateStatus}
+        addBusy={statusBusy} deletingName={deletingStatus}
+      />
+    ),
+    "client-status": (
+      <Section title="Client Statuses" items={clientStatuses}
+        name={clientStatusName} onNameChange={setClientStatusName}
+        color={clientStatusColor} onColorChange={setClientStatusColor}
+        onAdd={() => wrap(async () => { await onAddClientStatus(clientStatusName.trim(), clientStatusColor); setClientStatusName("") }, setClientStatusBusy)}
+        onDelete={async (name) => { setDeletingClientStatus(name); await wrap(() => onDeleteClientStatus(name), () => {}); setDeletingClientStatus(null) }}
+        onUpdateColor={onUpdateClientStatus}
+        addBusy={clientStatusBusy} deletingName={deletingClientStatus}
+      />
+    ),
+    "assignees": (
+      <Section title="Assignees" items={assignees}
+        name={assigneeName} onNameChange={setAssigneeName}
+        color={assigneeColor} onColorChange={setAssigneeColor}
+        onAdd={() => wrap(async () => { await onAddAssignee(assigneeName.trim(), assigneeColor); setAssigneeName("") }, setAssigneeBusy)}
+        onDelete={async (name) => { setDeletingAssignee(name); await wrap(() => onDeleteAssignee(name), () => {}); setDeletingAssignee(null) }}
+        onUpdateColor={onUpdateAssignee}
+        addBusy={assigneeBusy} deletingName={deletingAssignee}
+      />
+    ),
+    "priorities": (
+      <Section title="Priorities" items={priorities}
+        name={priorityName} onNameChange={setPriorityName}
+        color={priorityColor} onColorChange={setPriorityColor}
+        onAdd={() => wrap(async () => { await onAddPriority(priorityName.trim(), priorityColor); setPriorityName("") }, setPriorityBusy)}
+        onDelete={async (name) => { setDeletingPriority(name); await wrap(() => onDeletePriority(name), () => {}); setDeletingPriority(null) }}
+        onUpdateColor={onUpdatePriority}
+        addBusy={priorityBusy} deletingName={deletingPriority}
+      />
+    ),
   }
 
   return (
@@ -270,58 +246,60 @@ export function ManageModal({
     >
       <div
         className="modal-sheet"
-        style={{ background: "#fff", width: "100%", maxWidth: 460, borderRadius: 16, padding: "24px 24px 28px", boxSizing: "border-box", boxShadow: "0 8px 40px rgba(0,0,0,0.18)", maxHeight: "90vh", overflowY: "auto" }}
+        style={{ background: "#fff", width: "100%", maxWidth: 480, borderRadius: 16, padding: "24px 24px 28px", boxSizing: "border-box", boxShadow: "0 8px 40px rgba(0,0,0,0.18)", maxHeight: "90vh", display: "flex", flexDirection: "column" }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "#1A1A1A" }}>Manage Brands & Statuses</h2>
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "#1A1A1A" }}>Manage</h2>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "#999", minHeight: 44, minWidth: 44, lineHeight: 1 }}>×</button>
         </div>
 
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 4, marginBottom: 20, overflowX: "auto", flexShrink: 0, paddingBottom: 2 }}>
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              style={{
+                padding: "6px 12px",
+                borderRadius: 8,
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                fontSize: 13,
+                fontWeight: activeTab === t.key ? 600 : 400,
+                background: activeTab === t.key ? "#7F77DD" : "#F0EEE8",
+                color: activeTab === t.key ? "#fff" : "#555",
+                whiteSpace: "nowrap",
+                minHeight: 36,
+                transition: "background 0.15s",
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Error */}
         {error && (
-          <div style={{ background: "#FDECEA", color: "#C0392B", borderRadius: 8, padding: "8px 12px", fontSize: 13, marginBottom: 16 }}>
+          <div style={{ background: "#FDECEA", color: "#C0392B", borderRadius: 8, padding: "8px 12px", fontSize: 13, marginBottom: 16, flexShrink: 0 }}>
             {error}
           </div>
         )}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <Section
-            title="Brands"
-            items={brands}
-            name={brandName}
-            onNameChange={setBrandName}
-            color={brandColor}
-            onColorChange={setBrandColor}
-            onAdd={handleAddBrand}
-            onDelete={(name) => setBrandToDelete(name)}
-            onUpdateColor={onUpdateBrand}
-            addBusy={brandAddBusy}
-            deletingName={null}
-          />
-          <div style={{ height: 1, background: "#E8E6E0" }} />
-          <Section
-            title="Statuses"
-            items={statuses}
-            name={statusName}
-            onNameChange={setStatusName}
-            color={statusColor}
-            onColorChange={setStatusColor}
-            onAdd={handleAddStatus}
-            onDelete={handleDeleteStatus}
-            onUpdateColor={onUpdateStatus}
-            addBusy={statusAddBusy}
-            deletingName={deletingStatus}
-          />
+        {/* Tab content */}
+        <div style={{ overflowY: "auto", flex: 1 }}>
+          {tabContent[activeTab]}
         </div>
       </div>
 
       {brandToDelete && (() => {
-        const sc = (name: string) => statuses.find((s) => s.name === name)?.color ?? "#888888"
         const affected: ProjectPreview[] = projects
           .filter((p) => p.brand === brandToDelete)
-          .map((p) => ({ id: p.id, name: p.name, pm: p.pm, status: p.status, statusColor: sc(p.status), due_date: p.due_date }))
+          .map((p) => ({ id: p.id, name: p.name, customer_name: p.customer_name, internal_status: p.internal_status, statusColor: sc(p.internal_status), due_date: p.due_date }))
         const force = affected.length > 0
         const description = force
-          ? `Brand "${brandToDelete}" and all its tasks will be permanently deleted. This action cannot be undone.`
+          ? `Brand "${brandToDelete}" and all its projects will be permanently deleted. This action cannot be undone.`
           : `Brand "${brandToDelete}" will be permanently deleted. This action cannot be undone.`
         return (
           <DeleteConfirmModal

@@ -46,11 +46,11 @@ export function Overview({ projects, allProjects, brands, statuses, notes, onSav
   today.setHours(0, 0, 0, 0)
 
   const total = projects.length
-  const done = projects.filter((p) => p.status === "Done").length
-  const inProgress = projects.filter((p) => p.status === "In Progress").length
+  const done = projects.filter((p) => p.internal_status === "Done").length
+  const inProgress = projects.filter((p) => p.internal_status === "In Progress").length
   const urgent = projects.filter((p) => {
     const due = new Date(p.due_date + "T00:00:00")
-    return due < today && p.status !== "Done"
+    return due < today && p.internal_status !== "Done"
   }).length
   const donePct = total > 0 ? Math.round((done / total) * 100) : 0
 
@@ -117,12 +117,12 @@ export function Overview({ projects, allProjects, brands, statuses, notes, onSav
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {recent.map((p) => (
                   <div key={p.id} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: sc(p.status), flexShrink: 0, marginTop: 4 }} />
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: sc(p.internal_status), flexShrink: 0, marginTop: 4 }} />
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 500, color: "#1A1A1A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
                       <div style={{ fontSize: 12, color: "#999", marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
-                        <BrandBadge brand={p.brand} color={bc(p.brand)} /> · {p.pm} · Due {formatDate(p.due_date)}
-                        {(() => { const l = daysLabel(p.due_date, p.status); return l ? <span style={{ color: l.color, marginLeft: 2 }}>· {l.text}</span> : null })()}
+                        <BrandBadge brand={p.brand} color={bc(p.brand)} /> · {p.customer_name} · Due {formatDate(p.due_date)}
+                        {(() => { const l = daysLabel(p.due_date, p.internal_status); return l ? <span style={{ color: l.color, marginLeft: 2 }}>· {l.text}</span> : null })()}
                       </div>
                     </div>
                   </div>
@@ -151,9 +151,9 @@ export function Overview({ projects, allProjects, brands, statuses, notes, onSav
           {(() => {
             const pieData = statuses.map((s) => ({
               name: s.name,
-              value: projects.filter((p) => p.status === s.name).length,
+              value: projects.filter((p) => p.internal_status === s.name).length,
               color: s.color,
-              pct: String(Math.round(projects.filter((p) => p.status === s.name).length / (total || 1) * 100)),
+              pct: String(Math.round(projects.filter((p) => p.internal_status === s.name).length / (total || 1) * 100)),
             })).filter((d) => d.value > 0)
             return (
               <div style={{ background: "#fff", border: "1px solid #E8E6E0", borderRadius: 12, padding: "20px 24px" }}>

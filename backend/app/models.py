@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, Field
 
@@ -10,10 +11,14 @@ class ConfigItem(BaseModel):
 
 class ProjectBase(BaseModel):
     brand: str = Field(min_length=1, max_length=50)
-    pm: str = Field(min_length=1)
+    customer_name: str = Field(min_length=1)
     name: str = Field(min_length=1)
+    start_date: Optional[date] = None
     due_date: date
-    status: str = Field(min_length=1, max_length=50)
+    internal_status: str = Field(min_length=1, max_length=50)
+    client_status: str = ""
+    assignee: str = ""
+    priority: str = ""
     comment: str = ""
 
 

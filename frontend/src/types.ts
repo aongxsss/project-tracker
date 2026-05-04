@@ -1,13 +1,16 @@
 export type Brand = string
-export type Status = string
 
 export interface Project {
   id: string
   brand: Brand
-  pm: string
+  customer_name: string
   name: string
+  start_date: string | null
   due_date: string
-  status: Status
+  internal_status: string
+  client_status: string
+  assignee: string
+  priority: string
   comment: string
   created_at: string
 }

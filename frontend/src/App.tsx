@@ -24,7 +24,14 @@ export default function App() {
   const { user, loading: authLoading, login, register, logout, saveNotes } = useAuth()
   const isAuthenticated = !authLoading && !!user
   const { projects, loading, error, addProject, updateProject, deleteProject } = useProjects(isAuthenticated)
-  const { brands, statuses, addBrand, updateBrand, deleteBrand, addStatus, updateStatus, deleteStatus } = useConfig(isAuthenticated)
+  const {
+    brands, statuses, clientStatuses, assignees, priorities,
+    addBrand, updateBrand, deleteBrand,
+    addStatus, updateStatus, deleteStatus,
+    addClientStatus, updateClientStatus, deleteClientStatus,
+    addAssignee, updateAssignee, deleteAssignee,
+    addPriority, updatePriority, deletePriority,
+  } = useConfig(isAuthenticated)
   const { activeBrands, toggleBrand, filteredProjects } = useFilters(brands)
 
   const filtered = filteredProjects(projects)
@@ -92,7 +99,9 @@ export default function App() {
             totalCount={projects.length}
             brands={brands}
             statuses={statuses}
-            currentUserName={user.display_name}
+            clientStatuses={clientStatuses}
+            assignees={assignees}
+            priorities={priorities}
             onAdd={addProject}
             onUpdate={updateProject}
             onDelete={deleteProject}
@@ -104,6 +113,9 @@ export default function App() {
         <ManageModal
           brands={brands}
           statuses={statuses}
+          clientStatuses={clientStatuses}
+          assignees={assignees}
+          priorities={priorities}
           projects={projects}
           onAddBrand={addBrand}
           onUpdateBrand={updateBrand}
@@ -111,6 +123,15 @@ export default function App() {
           onAddStatus={addStatus}
           onUpdateStatus={updateStatus}
           onDeleteStatus={deleteStatus}
+          onAddClientStatus={addClientStatus}
+          onUpdateClientStatus={updateClientStatus}
+          onDeleteClientStatus={deleteClientStatus}
+          onAddAssignee={addAssignee}
+          onUpdateAssignee={updateAssignee}
+          onDeleteAssignee={deleteAssignee}
+          onAddPriority={addPriority}
+          onUpdatePriority={updatePriority}
+          onDeletePriority={deletePriority}
           onClose={() => setManageOpen(false)}
         />
       )}

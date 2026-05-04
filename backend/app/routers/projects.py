@@ -7,14 +7,11 @@ from app.auth import get_current_user
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
-_COLS = "id, brand, pm, name, due_date, status, comment, created_at"
+_COLS = "id, brand, customer_name, name, start_date, due_date, internal_status, client_status, assignee, priority, comment, created_at"
 
 
 def _row_to_dict(row: asyncpg.Record) -> dict:
     return dict(row)
-
-
-_AUTH = Depends(get_current_user)
 
 
 @router.get("", response_model=list[Project])
@@ -30,11 +27,13 @@ async def list_projects(pool: asyncpg.Pool = Depends(get_pool), user: dict = Dep
 async def create_project(body: ProjectCreate, pool: asyncpg.Pool = Depends(get_pool), user: dict = Depends(get_current_user)):
     row = await pool.fetchrow(
         f"""
-        INSERT INTO projects (brand, pm, name, due_date, status, comment, user_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO projects (brand, customer_name, name, start_date, due_date, internal_status, client_status, assignee, priority, comment, user_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING {_COLS}
         """,
-        body.brand, body.pm, body.name, body.due_date, body.status, body.comment, user["id"],
+        body.brand, body.customer_name, body.name, body.start_date, body.due_date,
+        body.internal_status, body.client_status, body.assignee, body.priority,
+        body.comment, user["id"],
     )
     return _row_to_dict(row)
 
@@ -49,12 +48,14 @@ async def update_project(
     row = await pool.fetchrow(
         f"""
         UPDATE projects
-        SET brand=$1, pm=$2, name=$3, due_date=$4, status=$5, comment=$6
-        WHERE id=$7 AND user_id=$8
+        SET brand=$1, customer_name=$2, name=$3, start_date=$4, due_date=$5,
+            internal_status=$6, client_status=$7, assignee=$8, priority=$9, comment=$10
+        WHERE id=$11 AND user_id=$12
         RETURNING {_COLS}
         """,
-        body.brand, body.pm, body.name, body.due_date, body.status, body.comment,
-        project_id, user["id"],
+        body.brand, body.customer_name, body.name, body.start_date, body.due_date,
+        body.internal_status, body.client_status, body.assignee, body.priority,
+        body.comment, project_id, user["id"],
     )
     if row is None:
         raise HTTPException(status_code=404, detail="Project not found")

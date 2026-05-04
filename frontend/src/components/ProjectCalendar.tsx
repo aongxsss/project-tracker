@@ -125,7 +125,7 @@ export function ProjectCalendar({ projects, brands, statuses, compact = false }:
                     <span key={t.id} title={t.name} style={{
                       width: compact ? 6 : 8, height: compact ? 6 : 8,
                       borderRadius: "50%", background: bc(t.brand),
-                      flexShrink: 0, opacity: t.status === "Done" ? 0.4 : 1,
+                      flexShrink: 0, opacity: t.internal_status === "Done" ? 0.4 : 1,
                     }} />
                   ))}
                   {tasks.length > (compact ? 4 : 3) && (
@@ -194,21 +194,21 @@ export function ProjectCalendar({ projects, brands, statuses, compact = false }:
                   <div style={{ fontSize: 11, color: "#ddd", textAlign: "center", marginTop: 8 }}>—</div>
                 )}
                 {tasks.map((t) => {
-                  const isOverdue = t.status !== "Done" && t.due_date < tk
+                  const isOverdue = t.internal_status !== "Done" && t.due_date < tk
                   return (
                     <div key={t.id} style={{
                       borderRadius: 6, padding: "4px 6px",
                       background: bc(t.brand) + "18",
                       borderLeft: `3px solid ${bc(t.brand)}`,
-                      opacity: t.status === "Done" ? 0.5 : 1,
+                      opacity: t.internal_status === "Done" ? 0.5 : 1,
                     }}>
                       <div style={{ fontSize: 11, fontWeight: 500, color: isOverdue ? "#C0392B" : "#1A1A1A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {t.name}
                       </div>
-                      <div style={{ fontSize: 10, color: "#999", marginTop: 1 }}>{t.pm}</div>
+                      <div style={{ fontSize: 10, color: "#999", marginTop: 1 }}>{t.customer_name}</div>
                       <div style={{ marginTop: 3 }}>
-                        <span style={{ fontSize: 10, background: sc(t.status) + "22", color: sc(t.status), borderRadius: 4, padding: "1px 5px", fontWeight: 500 }}>
-                          {t.status}
+                        <span style={{ fontSize: 10, background: sc(t.internal_status) + "22", color: sc(t.internal_status), borderRadius: 4, padding: "1px 5px", fontWeight: 500 }}>
+                          {t.internal_status}
                         </span>
                       </div>
                     </div>
@@ -285,15 +285,15 @@ export function ProjectCalendar({ projects, brands, statuses, compact = false }:
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {selectedTasks.map((t) => {
-              const isOverdue = t.status !== "Done" && t.due_date < tk
+              const isOverdue = t.internal_status !== "Done" && t.due_date < tk
               return (
                 <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "#fff", borderRadius: 8, border: "1px solid #F0EEE8", borderLeft: `4px solid ${bc(t.brand)}` }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: isOverdue ? "#C0392B" : "#1A1A1A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
-                    <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>{t.pm} · <span style={{ color: bc(t.brand) }}>{t.brand}</span></div>
+                    <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>{t.customer_name} · <span style={{ color: bc(t.brand) }}>{t.brand}</span></div>
                   </div>
-                  <span style={{ fontSize: 11, background: sc(t.status) + "22", color: sc(t.status), borderRadius: 999, padding: "2px 8px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0 }}>
-                    {t.status}
+                  <span style={{ fontSize: 11, background: sc(t.internal_status) + "22", color: sc(t.internal_status), borderRadius: 999, padding: "2px 8px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0 }}>
+                    {t.internal_status}
                   </span>
                 </div>
               )
