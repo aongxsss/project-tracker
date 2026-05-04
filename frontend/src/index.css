@@ -201,6 +201,11 @@ body {
   .tracking-controls {
     flex-direction: column !important;
   }
+  .tracking-search {
+    min-width: 0 !important;
+    width: 100% !important;
+    flex: 1 1 auto !important;
+  }
   .add-project-btn {
     width: 100% !important;
   }
@@ -226,27 +231,41 @@ body {
   }
 
   /* Detail dialog: full screen + single column on mobile */
-  .modal-backdrop:has(.detail-dialog) {
+  .detail-backdrop {
     padding: 0 !important;
     align-items: flex-end !important;
   }
   .detail-dialog {
-    height: 95vh !important;
+    height: 92dvh !important;
     border-radius: 12px 12px 0 0 !important;
     max-width: 100% !important;
+    overflow: hidden !important;
   }
+  /* body stacks vertically; each pane scrolls independently */
   .detail-body {
     flex-direction: column !important;
+    overflow: hidden !important;
   }
+  /* description pane: takes remaining space, scrolls internally */
+  .detail-left {
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+  }
+  /* tab content must not create inner scroll on mobile — let detail-left scroll */
+  .detail-tab-content {
+    flex: none !important;
+    overflow: visible !important;
+  }
+  /* threads pane: fixed height at bottom, never pushes description away */
   .detail-right {
     width: 100% !important;
     border-left: none !important;
     border-top: 2px solid #F0EEE8 !important;
-    min-height: 260px;
-    max-height: 320px;
-  }
-  .detail-left {
-    min-height: 0;
+    height: 300px !important;
+    min-height: unset !important;
+    max-height: unset !important;
+    flex-shrink: 0 !important;
   }
 
   /* Touch targets */

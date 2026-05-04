@@ -317,7 +317,7 @@ export function ProjectDetail({
     <div
       ref={backdropRef}
       onClick={(e) => { if (e.target === backdropRef.current) onClose() }}
-      className="modal-backdrop"
+      className="modal-backdrop detail-backdrop"
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
     >
       <div
@@ -405,7 +405,7 @@ export function ProjectDetail({
             </div>
 
             {/* Tab content */}
-            <div style={{ flex: 1, overflow: "auto", padding: "16px 24px" }}>
+            <div className="detail-tab-content" style={{ flex: 1, overflow: "auto", padding: "16px 24px" }}>
 
               {leftTab === "description" && (
                 <div

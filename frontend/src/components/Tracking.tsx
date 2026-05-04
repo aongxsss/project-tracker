@@ -137,6 +137,7 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
           placeholder="Search by project name, customer, or brand…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          className="tracking-search"
           style={{ ...inputStyle, minWidth: 260, flex: "1 1 260px" }}
         />
         <select
