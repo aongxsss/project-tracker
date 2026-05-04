@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sidebar } from "./components/Sidebar"
 import { Overview } from "./components/Overview"
 import { Tracking } from "./components/Tracking"
@@ -15,6 +15,11 @@ export default function App() {
   const [page, setPage] = useState<Page>("overview")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [manageOpen, setManageOpen] = useState(false)
+
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [sidebarOpen])
 
   const { user, loading: authLoading, login, register, logout, saveNotes } = useAuth()
   const isAuthenticated = !authLoading && !!user

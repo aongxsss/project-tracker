@@ -69,7 +69,7 @@ export function Overview({ projects, allProjects, brands, statuses, notes, onSav
 
   if (total === 0 && allProjects.length === 0) {
     return (
-      <div style={{ padding: "40px 32px", width: "100%", boxSizing: "border-box" }}>
+      <div className="page-content" style={{ padding: "40px 32px", width: "100%", boxSizing: "border-box" }}>
         <h1 style={{ fontSize: 22, fontWeight: 600, margin: "0 0 24px", color: "#1A1A1A" }}>Overview</h1>
         <div style={{ textAlign: "center", padding: "60px 0", color: "#999", fontSize: 14 }}>
           No tasks yet. Add your first task in Tracking.
@@ -79,7 +79,7 @@ export function Overview({ projects, allProjects, brands, statuses, notes, onSav
   }
 
   return (
-    <div style={{ padding: "32px 32px 48px", width: "100%", boxSizing: "border-box" }}>
+    <div className="page-content" style={{ padding: "32px 32px 48px", width: "100%", boxSizing: "border-box" }}>
       <h1 style={{ fontSize: 22, fontWeight: 600, margin: "0 0 24px", color: "#1A1A1A" }}>Overview</h1>
 
       {/* Stat Cards */}
