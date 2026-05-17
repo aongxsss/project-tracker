@@ -410,14 +410,14 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, background: "#fff", border: "1px solid #E8E6E0", borderRadius: 12, overflow: "hidden" }}>
               <thead>
                 <tr style={{ background: "#FAFAF8", borderBottom: "1px solid #E8E6E0" }}>
-                  <th onClick={() => toggleSort("start_date")} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666", cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}>Start Date {sortArrow("start_date")}</th>
-                  <th onClick={() => toggleSort("due_date")} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666", cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}>Final Date {sortArrow("due_date")}</th>
+                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666", whiteSpace: "nowrap" }}>Int. Status</th>
                   <th onClick={() => toggleSort("brand")} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666", cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}>Brand {sortArrow("brand")}</th>
                   <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666" }}>Customer</th>
                   <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666" }}>Project Name</th>
                   <th onClick={() => toggleSort("priority")} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666", cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}>Priority {sortArrow("priority")}</th>
-                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666", whiteSpace: "nowrap" }}>Int. Status</th>
                   <th className="comment-col" style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666", whiteSpace: "nowrap" }}>Client Status</th>
+                  <th onClick={() => toggleSort("start_date")} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666", cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}>Start Date {sortArrow("start_date")}</th>
+                  <th onClick={() => toggleSort("due_date")} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666", cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}>Final Date {sortArrow("due_date")}</th>
                   <th className="comment-col" style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666" }}>Comment</th>
                   <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666" }}>Actions</th>
                 </tr>
@@ -427,25 +427,14 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
                   const overdue = isOverdue(p.due_date, p.internal_status)
                   return (
                     <tr key={p.id} className="table-row" style={{ borderBottom: "1px solid #F0EEE8" }}>
-                      <td style={{ padding: "11px 14px", color: "#666", whiteSpace: "nowrap" }}>
-                        <InlineDate
-                          value={p.start_date}
-                          onSave={(next) => patch(p, { start_date: next })}
-                          children={<span style={{ color: p.start_date ? "#666" : "#bbb" }}>{formatDate(p.start_date)}</span>}
-                        />
-                      </td>
-                      <td style={{ padding: "11px 14px", whiteSpace: "nowrap" }}>
-                        <InlineDate
-                          value={p.due_date}
-                          required
-                          onSave={(next) => next ? patch(p, { due_date: next }) : Promise.resolve()}
-                          children={
-                            <>
-                              <div style={{ color: overdue ? "#C0392B" : "#333", fontWeight: overdue ? 500 : 400 }}>{formatDate(p.due_date)}</div>
-                              {(() => { const lbl = daysLabel(p.due_date, p.internal_status); return lbl ? <div style={{ fontSize: 11, color: lbl.color, marginTop: 1 }}>{lbl.text}</div> : null })()}
-                            </>
-                          }
-                        />
+                      <td style={{ padding: "11px 14px" }}>
+                        <BadgeDropdown
+                          current={p.internal_status}
+                          options={statuses}
+                          onSelect={(next) => patch(p, { internal_status: next })}
+                        >
+                          <StatusBadge status={p.internal_status} color={sc(p.internal_status)} />
+                        </BadgeDropdown>
                       </td>
                       <td style={{ padding: "11px 14px" }}>
                         <BadgeDropdown
@@ -488,15 +477,6 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
                           {p.priority ? <StatusBadge status={p.priority} color={pc(p.priority)} /> : <span style={{ color: "#ccc" }}>—</span>}
                         </BadgeDropdown>
                       </td>
-                      <td style={{ padding: "11px 14px" }}>
-                        <BadgeDropdown
-                          current={p.internal_status}
-                          options={statuses}
-                          onSelect={(next) => patch(p, { internal_status: next })}
-                        >
-                          <StatusBadge status={p.internal_status} color={sc(p.internal_status)} />
-                        </BadgeDropdown>
-                      </td>
                       <td className="comment-col" style={{ padding: "11px 14px" }}>
                         <BadgeDropdown
                           current={p.client_status}
@@ -506,6 +486,26 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
                         >
                           {p.client_status ? <StatusBadge status={p.client_status} color={csc(p.client_status)} /> : <span style={{ color: "#ccc" }}>—</span>}
                         </BadgeDropdown>
+                      </td>
+                      <td style={{ padding: "11px 14px", color: "#666", whiteSpace: "nowrap" }}>
+                        <InlineDate
+                          value={p.start_date}
+                          onSave={(next) => patch(p, { start_date: next })}
+                          children={<span style={{ color: p.start_date ? "#666" : "#bbb" }}>{formatDate(p.start_date)}</span>}
+                        />
+                      </td>
+                      <td style={{ padding: "11px 14px", whiteSpace: "nowrap" }}>
+                        <InlineDate
+                          value={p.due_date}
+                          required
+                          onSave={(next) => next ? patch(p, { due_date: next }) : Promise.resolve()}
+                          children={
+                            <>
+                              <div style={{ color: overdue ? "#C0392B" : "#333", fontWeight: overdue ? 500 : 400 }}>{formatDate(p.due_date)}</div>
+                              {(() => { const lbl = daysLabel(p.due_date, p.internal_status); return lbl ? <div style={{ fontSize: 11, color: lbl.color, marginTop: 1 }}>{lbl.text}</div> : null })()}
+                            </>
+                          }
+                        />
                       </td>
                       <td className="comment-col" style={{ padding: "11px 14px", color: "#999", maxWidth: 160 }}>
                         <InlineText
