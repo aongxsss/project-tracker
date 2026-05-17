@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { Sheet, SheetColumn, SheetRow } from "../types"
+import { Sheet, SheetColumn, SheetRow, MergeRegion } from "../types"
 
 const API = import.meta.env.VITE_API_URL
 const CREDS: RequestInit = { credentials: "include" }
@@ -13,6 +13,14 @@ interface SheetPatch {
   title?: string
   columns?: SheetColumn[]
   rows?: SheetRow[]
+  merges?: MergeRegion[]
+}
+
+interface SheetCreatePayload {
+  title?: string
+  columns?: SheetColumn[]
+  rows?: SheetRow[]
+  merges?: MergeRegion[]
 }
 
 function uid() { return Math.random().toString(36).slice(2, 10) }
@@ -42,13 +50,18 @@ export function useSheets(enabled = true) {
 
   useEffect(() => { fetchSheets() }, [fetchSheets])
 
-  const addSheet = async (title = "Untitled Sheet"): Promise<Sheet> => {
-    const columns: SheetColumn[] = Array.from({ length: DEFAULT_COL_COUNT }, (_, i) => ({ id: uid(), name: `Column ${i + 1}` }))
-    const rows: SheetRow[] = Array.from({ length: DEFAULT_ROW_COUNT }, () => ({ id: uid(), cells: {} }))
+  const addSheet = async (titleOrPayload: string | SheetCreatePayload = "Untitled Sheet"): Promise<Sheet> => {
+    const payload: SheetCreatePayload = typeof titleOrPayload === "string"
+      ? { title: titleOrPayload }
+      : titleOrPayload
+    const title = payload.title ?? "Untitled Sheet"
+    const columns: SheetColumn[] = payload.columns ?? Array.from({ length: DEFAULT_COL_COUNT }, (_, i) => ({ id: uid(), name: `Column ${i + 1}` }))
+    const rows: SheetRow[] = payload.rows ?? Array.from({ length: DEFAULT_ROW_COUNT }, () => ({ id: uid(), cells: {} }))
+    const merges: MergeRegion[] = payload.merges ?? []
     const res = await fetch(`${API}/api/sheets`, {
       ...CREDS, method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, columns, rows }),
+      body: JSON.stringify({ title, columns, rows, merges }),
     })
     if (!res.ok) await errDetail(res, "Failed to create sheet")
     const created: Sheet = await res.json()

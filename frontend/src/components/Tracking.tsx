@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Project, ProjectInput, ConfigItem } from "../types"
 import { BrandBadge } from "./BrandBadge"
 import { StatusBadge } from "./StatusBadge"
@@ -34,6 +34,238 @@ function daysLabel(due: string, status: string): { text: string; color: string }
   return { text: `${Math.abs(diff)}d overdue`, color: "#C0392B" }
 }
 
+function toInput(p: Project): ProjectInput {
+  return {
+    brand: p.brand,
+    customer_name: p.customer_name,
+    name: p.name,
+    start_date: p.start_date,
+    due_date: p.due_date,
+    internal_status: p.internal_status,
+    client_status: p.client_status,
+    assignee: p.assignee,
+    priority: p.priority,
+    comment: p.comment,
+    description: p.description,
+  }
+}
+
+// ──────── inline editors ────────
+
+interface DropdownProps {
+  current: string
+  options: ConfigItem[]
+  onSelect: (next: string) => Promise<void>
+  children: React.ReactNode
+  allowEmpty?: boolean
+}
+
+function BadgeDropdown({ current, options, onSelect, children, allowEmpty }: DropdownProps) {
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false) }
+    document.addEventListener("mousedown", handler)
+    document.addEventListener("keydown", esc)
+    return () => {
+      document.removeEventListener("mousedown", handler)
+      document.removeEventListener("keydown", esc)
+    }
+  }, [open])
+
+  const select = async (name: string) => {
+    if (name === current) { setOpen(false); return }
+    setSaving(true)
+    try {
+      await onSelect(name)
+    } finally {
+      setSaving(false)
+      setOpen(false)
+    }
+  }
+
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }} onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        disabled={saving}
+        title="Click to change"
+        style={{ background: "none", border: "none", padding: 0, cursor: saving ? "wait" : "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1 }}
+      >
+        {children}
+      </button>
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 4px)",
+            left: 0,
+            zIndex: 100,
+            background: "#fff",
+            border: "1px solid #E8E6E0",
+            borderRadius: 8,
+            boxShadow: "0 6px 20px rgba(0,0,0,0.10)",
+            padding: 4,
+            minWidth: 160,
+            maxHeight: 260,
+            overflowY: "auto",
+          }}
+        >
+          {allowEmpty && (
+            <button
+              type="button"
+              onClick={() => select("")}
+              style={{
+                display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "6px 10px",
+                background: current === "" ? "#F5F4FA" : "none", border: "none", borderRadius: 6,
+                cursor: "pointer", fontFamily: "inherit", fontSize: 13, textAlign: "left", color: "#888",
+              }}
+            >
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#ddd", flexShrink: 0 }} />
+              <span>— None</span>
+            </button>
+          )}
+          {options.map((o) => (
+            <button
+              type="button"
+              key={o.name}
+              onClick={() => select(o.name)}
+              style={{
+                display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "6px 10px",
+                background: current === o.name ? "#F5F4FA" : "none", border: "none", borderRadius: 6,
+                cursor: "pointer", fontFamily: "inherit", fontSize: 13, textAlign: "left", color: "#1A1A1A",
+              }}
+            >
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: o.color, flexShrink: 0 }} />
+              <span>{o.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+interface InlineDateProps {
+  value: string | null
+  required?: boolean
+  onSave: (next: string | null) => Promise<void>
+  children: React.ReactNode
+}
+
+function InlineDate({ value, required, onSave, children }: InlineDateProps) {
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const commit = async (next: string) => {
+    const normalized = next || null
+    if (required && !normalized) { setEditing(false); return }
+    if (normalized === value) { setEditing(false); return }
+    setSaving(true)
+    try { await onSave(normalized) } finally { setSaving(false); setEditing(false) }
+  }
+
+  if (editing) {
+    return (
+      <input
+        type="date"
+        autoFocus
+        defaultValue={value ?? ""}
+        disabled={saving}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") { e.preventDefault(); setEditing(false) }
+          if (e.key === "Enter") { e.preventDefault(); commit((e.target as HTMLInputElement).value) }
+        }}
+        onChange={(e) => commit(e.target.value)}
+        onBlur={(e) => commit(e.target.value)}
+        style={{
+          padding: "4px 6px", border: "1px solid #7F77DD", borderRadius: 6,
+          fontFamily: "inherit", fontSize: 13, background: "#fff", color: "#1A1A1A", outline: "none",
+        }}
+      />
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); setEditing(true) }}
+      title="Click to change date"
+      style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "inherit", textAlign: "left", color: "inherit" }}
+    >
+      {children}
+    </button>
+  )
+}
+
+interface InlineTextProps {
+  value: string
+  onSave: (next: string) => Promise<void>
+  placeholder?: string
+  display: React.ReactNode
+  width?: number | string
+}
+
+function InlineText({ value, onSave, placeholder, display, width }: InlineTextProps) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => { if (editing) setDraft(value) }, [editing, value])
+
+  const commit = async () => {
+    if (draft === value) { setEditing(false); return }
+    setSaving(true)
+    try { await onSave(draft) } finally { setSaving(false); setEditing(false) }
+  }
+
+  if (editing) {
+    return (
+      <input
+        type="text"
+        autoFocus
+        value={draft}
+        disabled={saving}
+        placeholder={placeholder}
+        onClick={(e) => e.stopPropagation()}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") { e.preventDefault(); setEditing(false) }
+          if (e.key === "Enter") { e.preventDefault(); commit() }
+        }}
+        onBlur={commit}
+        style={{
+          width: width ?? "100%",
+          padding: "4px 6px", border: "1px solid #7F77DD", borderRadius: 6,
+          fontFamily: "inherit", fontSize: 13, background: "#fff", color: "#1A1A1A", outline: "none",
+          boxSizing: "border-box",
+        }}
+      />
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); setEditing(true) }}
+      title="Click to edit"
+      style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "inherit", textAlign: "left", color: "inherit", display: "block", width: "100%" }}
+    >
+      {display}
+    </button>
+  )
+}
+
+// ──────── Tracking ────────
+
 interface Props {
   projects: Project[]
   totalCount: number
@@ -64,6 +296,8 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
   const pc = (name: string) => priorities.find((p) => p.name === name)?.color ?? "#888888"
 
   const PRIORITY_ORDER: Record<string, number> = { High: 0, Medium: 1, Low: 2 }
+
+  const patch = (p: Project, partial: Partial<ProjectInput>) => onUpdate(p.id, { ...toInput(p), ...partial })
 
   const filtered = projects
     .filter((p) => {
@@ -126,7 +360,7 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
     <div className="page-content" style={{ padding: "32px 32px 48px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", flex: 1 }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 600, margin: 0, color: "#1A1A1A" }}>Project Tracking</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 600, margin: 0, color: "#1A1A1A" }}>Tracking</h1>
         <p style={{ margin: "4px 0 0", fontSize: 13, color: "#999" }}>{filtered.length} of {totalCount} projects</p>
       </div>
 
@@ -192,28 +426,98 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
                 {filtered.map((p) => {
                   const overdue = isOverdue(p.due_date, p.internal_status)
                   return (
-                    <tr key={p.id} className="table-row" onClick={() => setViewProjectId(p.id)} style={{ borderBottom: "1px solid #F0EEE8", cursor: "pointer" }}>
-                      <td style={{ padding: "11px 14px", color: "#666", whiteSpace: "nowrap" }}>{formatDate(p.start_date)}</td>
+                    <tr key={p.id} className="table-row" style={{ borderBottom: "1px solid #F0EEE8" }}>
+                      <td style={{ padding: "11px 14px", color: "#666", whiteSpace: "nowrap" }}>
+                        <InlineDate
+                          value={p.start_date}
+                          onSave={(next) => patch(p, { start_date: next })}
+                          children={<span style={{ color: p.start_date ? "#666" : "#bbb" }}>{formatDate(p.start_date)}</span>}
+                        />
+                      </td>
                       <td style={{ padding: "11px 14px", whiteSpace: "nowrap" }}>
-                        <div style={{ color: overdue ? "#C0392B" : "#333", fontWeight: overdue ? 500 : 400 }}>{formatDate(p.due_date)}</div>
-                        {(() => { const lbl = daysLabel(p.due_date, p.internal_status); return lbl ? <div style={{ fontSize: 11, color: lbl.color, marginTop: 1 }}>{lbl.text}</div> : null })()}
-                      </td>
-                      <td style={{ padding: "11px 14px" }}><BrandBadge brand={p.brand} color={bc(p.brand)} /></td>
-                      <td style={{ padding: "11px 14px", color: "#333", maxWidth: 140 }}>
-                        <span title={p.customer_name} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.customer_name}</span>
-                      </td>
-                      <td style={{ padding: "11px 14px", maxWidth: 200 }}>
-                        <span title={p.name} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#1A1A1A" }}>{p.name}</span>
+                        <InlineDate
+                          value={p.due_date}
+                          required
+                          onSave={(next) => next ? patch(p, { due_date: next }) : Promise.resolve()}
+                          children={
+                            <>
+                              <div style={{ color: overdue ? "#C0392B" : "#333", fontWeight: overdue ? 500 : 400 }}>{formatDate(p.due_date)}</div>
+                              {(() => { const lbl = daysLabel(p.due_date, p.internal_status); return lbl ? <div style={{ fontSize: 11, color: lbl.color, marginTop: 1 }}>{lbl.text}</div> : null })()}
+                            </>
+                          }
+                        />
                       </td>
                       <td style={{ padding: "11px 14px" }}>
-                        {p.priority ? <StatusBadge status={p.priority} color={pc(p.priority)} /> : <span style={{ color: "#ccc" }}>—</span>}
+                        <BadgeDropdown
+                          current={p.brand}
+                          options={brands}
+                          onSelect={(next) => patch(p, { brand: next })}
+                        >
+                          <BrandBadge brand={p.brand} color={bc(p.brand)} />
+                        </BadgeDropdown>
                       </td>
-                      <td style={{ padding: "11px 14px" }}><StatusBadge status={p.internal_status} color={sc(p.internal_status)} /></td>
+                      <td style={{ padding: "11px 14px", color: "#333", maxWidth: 140 }}>
+                        <InlineText
+                          value={p.customer_name}
+                          placeholder="Customer…"
+                          onSave={(next) => next.trim() ? patch(p, { customer_name: next.trim() }) : Promise.resolve()}
+                          display={
+                            <span title={p.customer_name} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: p.customer_name ? "#333" : "#bbb" }}>
+                              {p.customer_name || "—"}
+                            </span>
+                          }
+                        />
+                      </td>
+                      <td style={{ padding: "11px 14px", maxWidth: 200 }}>
+                        <InlineText
+                          value={p.name}
+                          placeholder="Project name…"
+                          onSave={(next) => next.trim() ? patch(p, { name: next.trim() }) : Promise.resolve()}
+                          display={
+                            <span title={p.name} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#1A1A1A" }}>{p.name}</span>
+                          }
+                        />
+                      </td>
+                      <td style={{ padding: "11px 14px" }}>
+                        <BadgeDropdown
+                          current={p.priority}
+                          options={priorities}
+                          allowEmpty
+                          onSelect={(next) => patch(p, { priority: next })}
+                        >
+                          {p.priority ? <StatusBadge status={p.priority} color={pc(p.priority)} /> : <span style={{ color: "#ccc" }}>—</span>}
+                        </BadgeDropdown>
+                      </td>
+                      <td style={{ padding: "11px 14px" }}>
+                        <BadgeDropdown
+                          current={p.internal_status}
+                          options={statuses}
+                          onSelect={(next) => patch(p, { internal_status: next })}
+                        >
+                          <StatusBadge status={p.internal_status} color={sc(p.internal_status)} />
+                        </BadgeDropdown>
+                      </td>
                       <td className="comment-col" style={{ padding: "11px 14px" }}>
-                        {p.client_status ? <StatusBadge status={p.client_status} color={csc(p.client_status)} /> : <span style={{ color: "#ccc" }}>—</span>}
+                        <BadgeDropdown
+                          current={p.client_status}
+                          options={clientStatuses}
+                          allowEmpty
+                          onSelect={(next) => patch(p, { client_status: next })}
+                        >
+                          {p.client_status ? <StatusBadge status={p.client_status} color={csc(p.client_status)} /> : <span style={{ color: "#ccc" }}>—</span>}
+                        </BadgeDropdown>
                       </td>
                       <td className="comment-col" style={{ padding: "11px 14px", color: "#999", maxWidth: 160 }}>
-                        <span title={p.comment || undefined} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.comment || "—"}</span>
+                        <InlineText
+                          value={p.comment}
+                          placeholder="Add comment…"
+                          onSave={(next) => patch(p, { comment: next })}
+                          display={
+                            <span title={p.comment || undefined} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: p.comment ? "#666" : "#bbb" }}>
+                              {p.comment || "—"}
+                            </span>
+                          }
+                        />
                       </td>
                       <td onClick={(e) => e.stopPropagation()} style={{ padding: "11px 14px" }}>
                         {confirmDeleteId === p.id ? (
@@ -224,7 +528,10 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
                           </div>
                         ) : (
                           <div className="row-actions" style={{ display: "flex", gap: 6, opacity: 0, transition: "opacity 0.15s" }}>
-                            <button onClick={() => { setEditProject(p); setModalOpen(true) }} title="Edit" style={{ padding: "5px 8px", border: "1px solid #E8E6E0", borderRadius: 6, background: "#fff", cursor: "pointer", minHeight: 32, minWidth: 32 }}>
+                            <button onClick={() => setViewProjectId(p.id)} title="Open" style={{ padding: "5px 8px", border: "1px solid #E8E6E0", borderRadius: 6, background: "#fff", cursor: "pointer", minHeight: 32, minWidth: 32 }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                            </button>
+                            <button onClick={() => { setEditProject(p); setModalOpen(true) }} title="Edit (full)" style={{ padding: "5px 8px", border: "1px solid #E8E6E0", borderRadius: 6, background: "#fff", cursor: "pointer", minHeight: 32, minWidth: 32 }}>
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                             </button>
                             <button onClick={() => setConfirmDeleteId(p.id)} title="Delete" style={{ padding: "5px 8px", border: "1px solid #F5D0CC", borderRadius: 6, background: "#fff", cursor: "pointer", minHeight: 32, minWidth: 32 }}>
@@ -247,26 +554,69 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
               return (
                 <div key={p.id} style={{ background: "#fff", border: "1px solid #E8E6E0", borderRadius: 12, padding: "14px 16px" }}>
                   <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-                    <BrandBadge brand={p.brand} color={bc(p.brand)} />
-                    <StatusBadge status={p.internal_status} color={sc(p.internal_status)} />
-                    {p.priority && <StatusBadge status={p.priority} color={pc(p.priority)} />}
-                    {p.client_status && <StatusBadge status={p.client_status} color={csc(p.client_status)} />}
+                    <BadgeDropdown current={p.brand} options={brands} onSelect={(next) => patch(p, { brand: next })}>
+                      <BrandBadge brand={p.brand} color={bc(p.brand)} />
+                    </BadgeDropdown>
+                    <BadgeDropdown current={p.internal_status} options={statuses} onSelect={(next) => patch(p, { internal_status: next })}>
+                      <StatusBadge status={p.internal_status} color={sc(p.internal_status)} />
+                    </BadgeDropdown>
+                    <BadgeDropdown current={p.priority} options={priorities} allowEmpty onSelect={(next) => patch(p, { priority: next })}>
+                      {p.priority ? <StatusBadge status={p.priority} color={pc(p.priority)} /> : <span style={{ display: "inline-block", padding: "3px 10px", border: "1px dashed #ddd", borderRadius: 12, color: "#bbb", fontSize: 11 }}>+ Priority</span>}
+                    </BadgeDropdown>
+                    <BadgeDropdown current={p.client_status} options={clientStatuses} allowEmpty onSelect={(next) => patch(p, { client_status: next })}>
+                      {p.client_status ? <StatusBadge status={p.client_status} color={csc(p.client_status)} /> : <span style={{ display: "inline-block", padding: "3px 10px", border: "1px dashed #ddd", borderRadius: 12, color: "#bbb", fontSize: 11 }}>+ Client</span>}
+                    </BadgeDropdown>
                   </div>
-                  <button
-                    type="button"
-                    className="project-link"
-                    onClick={() => setViewProjectId(p.id)}
-                    style={{ fontWeight: 500, fontSize: 14, color: "#1A1A1A", marginBottom: 2, whiteSpace: "normal" }}
-                  >
-                    {p.name}
-                  </button>
-                  <div style={{ fontSize: 12, color: "#777", marginBottom: 4 }}>{p.customer_name}</div>
-                  <div style={{ fontSize: 12, color: "#999", marginBottom: 12 }}>
-                    {p.start_date ? <span>Start: {formatDate(p.start_date)} · </span> : null}
-                    Final: <span style={{ color: overdue ? "#C0392B" : "#999", fontWeight: overdue ? 500 : 400 }}>{formatDate(p.due_date)}</span>
-                    {(() => { const lbl = daysLabel(p.due_date, p.internal_status); return lbl ? <span style={{ color: lbl.color, marginLeft: 4 }}>· {lbl.text}</span> : null })()}
+                  <div style={{ marginBottom: 2 }}>
+                    <InlineText
+                      value={p.name}
+                      placeholder="Project name…"
+                      onSave={(next) => next.trim() ? patch(p, { name: next.trim() }) : Promise.resolve()}
+                      display={
+                        <span style={{ fontWeight: 500, fontSize: 14, color: "#1A1A1A", whiteSpace: "normal" }}>{p.name}</span>
+                      }
+                    />
+                  </div>
+                  <div style={{ marginBottom: 4 }}>
+                    <InlineText
+                      value={p.customer_name}
+                      placeholder="Customer…"
+                      onSave={(next) => next.trim() ? patch(p, { customer_name: next.trim() }) : Promise.resolve()}
+                      display={
+                        <span style={{ fontSize: 12, color: p.customer_name ? "#777" : "#bbb" }}>{p.customer_name || "+ Customer"}</span>
+                      }
+                    />
+                  </div>
+                  <div style={{ fontSize: 12, color: "#999", marginBottom: 10, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+                    <span>Start:</span>
+                    <InlineDate
+                      value={p.start_date}
+                      onSave={(next) => patch(p, { start_date: next })}
+                      children={<span style={{ color: p.start_date ? "#666" : "#bbb" }}>{formatDate(p.start_date)}</span>}
+                    />
+                    <span>· Final:</span>
+                    <InlineDate
+                      value={p.due_date}
+                      required
+                      onSave={(next) => next ? patch(p, { due_date: next }) : Promise.resolve()}
+                      children={<span style={{ color: overdue ? "#C0392B" : "#999", fontWeight: overdue ? 500 : 400 }}>{formatDate(p.due_date)}</span>}
+                    />
+                    {(() => { const lbl = daysLabel(p.due_date, p.internal_status); return lbl ? <span style={{ color: lbl.color }}>· {lbl.text}</span> : null })()}
+                  </div>
+                  <div style={{ marginBottom: 10 }}>
+                    <InlineText
+                      value={p.comment}
+                      placeholder="Add comment…"
+                      onSave={(next) => patch(p, { comment: next })}
+                      display={
+                        <span style={{ fontSize: 12, color: p.comment ? "#555" : "#bbb", fontStyle: p.comment ? "italic" : "normal" }}>
+                          {p.comment || "+ Add comment"}
+                        </span>
+                      }
+                    />
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => setViewProjectId(p.id)} style={{ flex: 1, padding: "8px", border: "1px solid #E8E6E0", borderRadius: 8, background: "#fff", cursor: "pointer", fontFamily: "inherit", fontSize: 13, minHeight: 44 }}>Open</button>
                     <button onClick={() => { setEditProject(p); setModalOpen(true) }} style={{ flex: 1, padding: "8px", border: "1px solid #E8E6E0", borderRadius: 8, background: "#fff", cursor: "pointer", fontFamily: "inherit", fontSize: 13, minHeight: 44 }}>Edit</button>
                     <button onClick={() => setConfirmDeleteId(p.id)} style={{ flex: 1, padding: "8px", border: "1px solid #F5D0CC", borderRadius: 8, background: "#fff", cursor: "pointer", fontFamily: "inherit", fontSize: 13, color: "#C0392B", minHeight: 44 }}>Delete</button>
                   </div>

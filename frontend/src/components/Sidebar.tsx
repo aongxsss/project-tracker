@@ -156,7 +156,7 @@ export function Sidebar({
         <div style={{ marginBottom: 32, paddingLeft: 4 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }} className="sidebar-label">
             <img src="/favicon.svg" alt="" width={36} height={36} style={{ flexShrink: 0 }} />
-            <span style={{ fontWeight: 700, fontSize: 18, color: "#1A1A1A" }}>Project Tracker</span>
+            <span style={{ fontWeight: 700, fontSize: 16, color: "#1A1A1A" }}>PROJECT TRACKER</span>
           </div>
           <div className="sidebar-icon-only" style={{ display: "none" }}>
             <img src="/favicon.svg" alt="Project Tracker" width={36} height={36} />

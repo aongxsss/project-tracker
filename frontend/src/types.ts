@@ -64,11 +64,19 @@ export interface SheetRow {
   cells: Record<string, string>
 }
 
+export interface MergeRegion {
+  r1: number
+  c1: number
+  r2: number
+  c2: number
+}
+
 export interface Sheet {
   id: string
   title: string
   columns: SheetColumn[]
   rows: SheetRow[]
+  merges: MergeRegion[]
   position: number
   created_at: string
   updated_at: string

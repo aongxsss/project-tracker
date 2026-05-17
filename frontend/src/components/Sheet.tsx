@@ -1,13 +1,20 @@
 import { useState } from "react"
-import { Sheet as SheetType, SheetColumn, SheetRow } from "../types"
+import { Sheet as SheetType, SheetColumn, SheetRow, MergeRegion } from "../types"
 import { SheetEditor } from "./SheetEditor"
+
+interface SheetCreatePayload {
+  title?: string
+  columns?: SheetColumn[]
+  rows?: SheetRow[]
+  merges?: MergeRegion[]
+}
 
 interface Props {
   sheets: SheetType[]
   loading: boolean
   error: string | null
-  onAdd: (title?: string) => Promise<SheetType>
-  onUpdate: (id: string, patch: { title?: string; columns?: SheetColumn[]; rows?: SheetRow[] }) => Promise<void>
+  onAdd: (titleOrPayload?: string | SheetCreatePayload) => Promise<SheetType>
+  onUpdate: (id: string, patch: { title?: string; columns?: SheetColumn[]; rows?: SheetRow[]; merges?: MergeRegion[] }) => Promise<void>
   onDelete: (id: string) => Promise<void>
 }
 
@@ -141,6 +148,10 @@ export function Sheet({ sheets, loading, error, onAdd, onUpdate, onDelete }: Pro
             sheet={active}
             onUpdate={onUpdate}
             onDelete={handleDelete}
+            onImport={async (payload) => {
+              const created = await onAdd(payload)
+              setActiveId(created.id)
+            }}
           />
         ) : null}
       </div>

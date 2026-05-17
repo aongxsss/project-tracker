@@ -153,11 +153,13 @@ async def _migrate(pool: asyncpg.Pool) -> None:
                 title TEXT NOT NULL DEFAULT 'Untitled Sheet',
                 columns JSONB NOT NULL DEFAULT '[]',
                 rows JSONB NOT NULL DEFAULT '[]',
+                merges JSONB NOT NULL DEFAULT '[]',
                 position INT NOT NULL DEFAULT 0,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
             )
         """)
+        await conn.execute("ALTER TABLE sheets ADD COLUMN IF NOT EXISTS merges JSONB NOT NULL DEFAULT '[]'")
         await conn.execute("CREATE INDEX IF NOT EXISTS sheets_user_idx ON sheets(user_id, position)")
 
         # Notes table (Google Keep-style cards)
