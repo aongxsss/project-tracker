@@ -282,7 +282,16 @@ async def _migrate(pool: asyncpg.Pool) -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _pool
-    _pool = await asyncpg.create_pool(os.environ["DATABASE_URL"])
+    _pool = await asyncpg.create_pool(
+        os.environ["DATABASE_URL"],
+        min_size=1,
+        max_size=10,
+        # Recycle idle connections before Railway's network drops them,
+        # avoiding stale conns that log "connection reset by peer".
+        max_inactive_connection_lifetime=60.0,
+        # Enable TCP keepalive so dead conns are detected, not silently held.
+        server_settings={"tcp_keepalives_idle": "30"},
+    )
     await _migrate(_pool)
     yield
     await _pool.close()
