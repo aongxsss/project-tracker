@@ -13,6 +13,7 @@ export interface Project {
   priority: string
   comment: string
   description: string
+  final_link: string
   created_at: string
 }
 

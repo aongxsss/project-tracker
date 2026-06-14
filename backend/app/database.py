@@ -232,6 +232,9 @@ async def _migrate(pool: asyncpg.Pool) -> None:
         # Project description (rich notes per project)
         await conn.execute("ALTER TABLE projects ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT ''")
 
+        # Final deliverable link (URL)
+        await conn.execute("ALTER TABLE projects ADD COLUMN IF NOT EXISTS final_link TEXT NOT NULL DEFAULT ''")
+
         # Project threads (team chat per project)
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS project_threads (

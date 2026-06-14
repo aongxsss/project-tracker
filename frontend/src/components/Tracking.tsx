@@ -47,6 +47,22 @@ function toInput(p: Project): ProjectInput {
     priority: p.priority,
     comment: p.comment,
     description: p.description,
+    final_link: p.final_link,
+  }
+}
+
+// Normalize a user-entered URL into a clickable href (prepend https:// if no scheme)
+function toHref(url: string): string {
+  const t = url.trim()
+  if (!t) return ""
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(t) ? t : `https://${t}`
+}
+
+function linkLabel(url: string): string {
+  try {
+    return new URL(toHref(url)).hostname.replace(/^www\./, "")
+  } catch {
+    return url
   }
 }
 
@@ -264,6 +280,88 @@ function InlineText({ value, onSave, placeholder, display, width }: InlineTextPr
   )
 }
 
+interface InlineLinkProps {
+  value: string
+  onSave: (next: string) => Promise<void>
+}
+
+// Google-Sheets-style link cell: shows a clickable hyperlink; click the pencil to edit the URL.
+function InlineLink({ value, onSave }: InlineLinkProps) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => { if (editing) setDraft(value) }, [editing, value])
+
+  const commit = async () => {
+    const next = draft.trim()
+    if (next === value) { setEditing(false); return }
+    setSaving(true)
+    try { await onSave(next) } finally { setSaving(false); setEditing(false) }
+  }
+
+  if (editing) {
+    return (
+      <input
+        type="url"
+        autoFocus
+        value={draft}
+        disabled={saving}
+        placeholder="https://…"
+        onClick={(e) => e.stopPropagation()}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") { e.preventDefault(); setEditing(false) }
+          if (e.key === "Enter") { e.preventDefault(); commit() }
+        }}
+        onBlur={commit}
+        style={{
+          width: "100%", minWidth: 120,
+          padding: "4px 6px", border: "1px solid #7F77DD", borderRadius: 6,
+          fontFamily: "inherit", fontSize: 13, background: "#fff", color: "#1A1A1A", outline: "none",
+          boxSizing: "border-box",
+        }}
+      />
+    )
+  }
+
+  if (!value) {
+    return (
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setEditing(true) }}
+        title="Add link"
+        style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "inherit", fontSize: 13, color: "#bbb", textAlign: "left" }}
+      >
+        + Link
+      </button>
+    )
+  }
+
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, maxWidth: 160 }}>
+      <a
+        href={toHref(value)}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={value}
+        onClick={(e) => e.stopPropagation()}
+        style={{ color: "#3B6FE0", textDecoration: "underline", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+      >
+        {linkLabel(value)}
+      </a>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setEditing(true) }}
+        title="Edit link"
+        style={{ background: "none", border: "none", padding: 0, cursor: "pointer", lineHeight: 0, flexShrink: 0 }}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+      </button>
+    </span>
+  )
+}
+
 // ──────── Tracking ────────
 
 interface Props {
@@ -418,6 +516,7 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
                   <th className="comment-col" style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666", whiteSpace: "nowrap" }}>Client Status</th>
                   <th onClick={() => toggleSort("start_date")} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666", cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}>Start Date {sortArrow("start_date")}</th>
                   <th onClick={() => toggleSort("due_date")} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666", cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}>Final Date {sortArrow("due_date")}</th>
+                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666", whiteSpace: "nowrap" }}>Final Link</th>
                   <th className="comment-col" style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666" }}>Comment</th>
                   <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 500, color: "#666" }}>Actions</th>
                 </tr>
@@ -505,6 +604,12 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
                               {(() => { const lbl = daysLabel(p.due_date, p.internal_status); return lbl ? <div style={{ fontSize: 11, color: lbl.color, marginTop: 1 }}>{lbl.text}</div> : null })()}
                             </>
                           }
+                        />
+                      </td>
+                      <td style={{ padding: "11px 14px" }}>
+                        <InlineLink
+                          value={p.final_link}
+                          onSave={(next) => patch(p, { final_link: next })}
                         />
                       </td>
                       <td className="comment-col" style={{ padding: "11px 14px", color: "#999", maxWidth: 160 }}>
@@ -602,6 +707,13 @@ export function Tracking({ projects, totalCount, brands, statuses, clientStatuse
                       children={<span style={{ color: overdue ? "#C0392B" : "#999", fontWeight: overdue ? 500 : 400 }}>{formatDate(p.due_date)}</span>}
                     />
                     {(() => { const lbl = daysLabel(p.due_date, p.internal_status); return lbl ? <span style={{ color: lbl.color }}>· {lbl.text}</span> : null })()}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#999", marginBottom: 10, display: "flex", gap: 6, alignItems: "center" }}>
+                    <span>Link:</span>
+                    <InlineLink
+                      value={p.final_link}
+                      onSave={(next) => patch(p, { final_link: next })}
+                    />
                   </div>
                   <div style={{ marginBottom: 10 }}>
                     <InlineText

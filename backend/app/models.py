@@ -21,6 +21,7 @@ class ProjectBase(BaseModel):
     priority: str = ""
     comment: str = ""
     description: str = ""
+    final_link: str = ""
 
 
 class ProjectCreate(ProjectBase):

@@ -86,6 +86,24 @@ function AttachChip({ url, label }: { url: string; label: string }) {
   )
 }
 
+// Split a plain text line into text + clickable links
+const URL_RE = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi
+
+function linkify(line: string) {
+  const parts = line.split(URL_RE)
+  return parts.map((part, i) => {
+    if (i % 2 === 1) {
+      const href = /^https?:\/\//i.test(part) ? part : `https://${part}`
+      return (
+        <a key={i} href={href} target="_blank" rel="noopener noreferrer" style={{ color: "#3B6FE0", textDecoration: "underline", wordBreak: "break-all" }}>
+          {part}
+        </a>
+      )
+    }
+    return part
+  })
+}
+
 function renderMessage(message: string, getDownloadUrl: (id: string) => string, previewImages = true) {
   return message.split("\n").map((line, i) => {
     const m = line.match(ATTACH_RE)
@@ -102,7 +120,7 @@ function renderMessage(message: string, getDownloadUrl: (id: string) => string, 
       }
       return <div key={i} style={{ marginTop: i > 0 ? 4 : 0 }}><AttachChip url={url} label={label} /></div>
     }
-    return <div key={i} style={{ marginTop: i > 0 ? 2 : 0 }}>{line || " "}</div>
+    return <div key={i} style={{ marginTop: i > 0 ? 2 : 0 }}>{line ? linkify(line) : " "}</div>
   })
 }
 
@@ -190,6 +208,7 @@ export function ProjectDetail({
         priority: project.priority,
         comment: project.comment,
         description: value,
+        final_link: project.final_link,
       }
       await onUpdate(project.id, input)
     } finally {
